@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabla con datos de API</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+  th, td {
+    white-space: nowrap; /* Evita que el contenido se rompa en varias líneas */
+  }
+     h2, h4,h5 {
+      color: #d46321;
+    }
+ .prepedido-ficha {
+  border: 1px solid #ccc;
+  padding: 20px;
+  font-size: 15px;
+  font-family: 'Segoe UI', sans-serif;
+  color: #333;
+  background: #fff;
+}
+
+.prepedido-ficha .header-row,
+.prepedido-ficha .footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.prepedido-ficha .section {
+  border: 1px solid #bbb;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  background-color: #fdf8f4;
+}
+
+.prepedido-ficha .section-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #d46321;
+  font-size: 16px;
+}
+
+.prepedido-ficha .table-responsive {
+  overflow-x: auto;
+}
+
+.prepedido-ficha table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 10px;
+  background: white;
+}
+
+.prepedido-ficha th,
+.prepedido-ficha td {
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid #ccc;
+}
+
+.prepedido-ficha th {
+  background-color: #f1f1f1;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .prepedido-ficha .header-row,
+  .prepedido-ficha .footer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .prepedido-ficha table {
+    font-size: 13px;
+  }
+
+}
+.btn-imprimir{
+  background-color: #d46321;
+  color: #fff;
+  border: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-imprimir:hover {
+  background-color: #a9490f; /* tono más oscuro en hover */
+  color: #fff;
+}
+
+ .btn-detalle {
+    background-color: #d46321;
+    color: white; /* Esto aplica también al emoji */
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+  }
+
+  .btn-detalle:hover {
+    background-color: #a9490f;
+  }
+  #spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5); /* Fondo negro semitransparente */
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spinner-border.orange {
+    color: #d46321; 
+    width: 4rem;
+    height: 4rem;
+  }
+
+  /* Encabezado color Azaleia */
+.azaleia-header {
+  background-color: #e26c20 !important; /* Color principal Azaleia */
+  color: white !important;
+}
+
+.azaleia-header th {
+  background-color: #e26c20 !important;
+  color: white !important;
+}
+
+
+</style>
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h2 class="mb-4">Lista de Pre-Pedido</h2>
+ <div class="mb-3">
+    <input type="text" id="buscador" class="form-control" placeholder="Buscar pre-pedido por número pedido, cliente, modelo...">
+  </div>
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="table table-bordered table-hover align-middle w-100">
+        <thead class="azaleia-header text-white">
+          <tr>
+            <th>FechaRegistro</th>
+            <th>NroPrePedido</th>
+            <th>NomCliente</th>
+            <th>NroDocumento</th>
+            <th>Vendedor</th>
+            <th>NomClienteResponsable</th>
+            <th>FechaConfirmacion</th>
+            <th>Cod. Fabricante</th>
+            <th>Fabricante</th>
+            <th>Detalle</th>
+            </tr>
+        </thead>
+        <tbody id="data-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+
+
+  <div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detalleModalLabel">Detalle del Pre-Predido</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="modal-body"><!-- se llena dinámicamente --></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-imprimir"  onclick="imprimirProformaDesdePopup()">Imprimir</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--Generacion de Pdf -->
+<div id="printArea" style="display:none; font-family: Arial, sans-serif; padding: 24px;">
+  <h2 style="text-align:center; margin-bottom: 24px;">Proforma Pre-Pedido</h2>
+
+  <div style="border: 1px solid #ccc; padding: 16px; font-size: 14px;">
+    <!-- Encabezado -->
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <div><strong>Fecha Registro:</strong> <span id="pdfFechaRegistro">-</span></div>
+      <div><strong>Vendedor:</strong> <span id="pdfVendedor"></span></div>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <strong>Nro Pedido:</strong> <span id="pdfNroPedido"></span>
+    </div>
+
+    <!-- Cliente -->
+    <div style="background-color: #fef5ef; border: 1px solid #e0b8a5; padding: 12px; margin-bottom: 16px;">
+      <div style="margin-bottom: 4px; color: #cc5200;"><strong>Cliente</strong></div>
+      <div style="display: flex; justify-content: space-between;">
+        <div><strong>Nombres:</strong> <span id="pdfNombreCliente"></span></div>
+        <div><strong>Nro Documento:</strong> <span id="pdfDocumento"></span></div>
+      </div>
+    </div>
+
+    <!-- Artículos -->
+    <div style="background-color: #fef5ef; border: 1px solid #e0b8a5; padding: 12px; margin-bottom: 16px;">
+      <div style="margin-bottom: 4px; color: #cc5200;"><strong>Artículos</strong></div>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead>
+            <tr style="background-color: #f8f8f8;">
+              <th style="border: 1px solid #ddd; padding: 6px;">Imagen</th>
+              <th style="border: 1px solid #ddd; padding: 6px;">Código</th>
+              <th style="border: 1px solid #ddd; padding: 6px;">Color</th>
+              <th style="border: 1px solid #ddd; padding: 6px;">Modelo</th>
+              <th style="border: 1px solid #ddd; padding: 6px;">Curva</th>
+              <th style="border: 1px solid #ddd; padding: 6px;">Precio S.</th>
+              <th style="border: 1px solid #ddd; padding: 6px;">Precio V.</th>
+            </tr>
+          </thead>
+          <tbody id="pdfDetalleArticulos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+       
+      <div>
+         <p>______________________________</p>
+        <strong>Responsable:</strong> <span id="pdfResponsable"></span></div>
+      <div><strong>Fecha Confirmación:</strong> <span id="pdfFechaConfirmacion"></span></div>
+    </div>
+  </div>
+</div>
+ <!-------------------------------------------------------->
+ <!----------------------SPINNER---------------------------------->
+ <!-- Spinner único para todo -->
+  <div id="spinner-overlay">
+    <div class="d-flex flex-column align-items-center justify-content-center">
+      <div class="spinner-border orange" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <div class="text-white mt-3 fs-5">Generando...</div>
+    </div>
+  </div>
+
+ <!-------------------------------------------------------->
+
+  <!-- Bootstrap bundle primero -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Tu script después de que Bootstrap ya existe -->
+  <script>
+    let codvendedor = "";
+    window.addEventListener('DOMContentLoaded', () => {
+  const usuario = localStorage.getItem('usuario');
+
+  if (!usuario) {
+    alert('⚠️ Sesión no válida. Por favor, inicia sesión.');
+    window.location.href = 'login.html';
+    return;
+  } 
+  codvendedor = usuario; 
+  cargarPrePedidos(codvendedor) ;
+  });
+ 
+
+  async function cargarPrePedidos(codvendedor) 
+  {
+  const spinner = document.getElementById('spinner-overlay');
+  const tbody = document.getElementById('data-body');
+
+  spinner.style.display = 'flex';     // 🔄 Mostrar spinner
+  tbody.innerHTML = '';   
+
+   fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/SearchPrePedidoAsync?'+ new URLSearchParams({ codusuario: codvendedor }))
+      .then(r => r.json())
+      .then(data => pintarTabla(data))
+       .catch(error => {
+        console.error(error);
+      tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center">Error al cargar los datos</td></tr>';
+    })
+    .finally(() => {
+      spinner.style.display = 'none';  //  Ocultar spinner cuando termine
+    });
+
+    // 2. Llenar la tabla
+    function pintarTabla(datos) {
+      const tbody = document.getElementById('data-body');
+      tbody.innerHTML = '';   
+         // limpia por si acaso
+      datos.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.fechaRegistro}</td>
+          <td>${u.nroPrePedido}</td>
+          <td>${u.ocliente.nomCliente}</td>
+          <td>${u.ocliente.nroDocumento}</td>
+          <td>${u.codvendedor}</td>
+          <td>${u.nomClienteResponsable}</td>
+          <td>${u.fechaConfirmacion}</td>
+          <td>${u.ofabricantes.codFabricante}</td>
+          <td>${u.ofabricantes.nomFabricante}</td>
+    
+          <td>
+            <button
+              class="btn btn-detalle btn-sm"
+              data-user='${encodeURIComponent(JSON.stringify(u.nroPrePedido))}'
+              data-bs-toggle="modal"
+              data-bs-target="#detalleModal">
+               <i class="fas fa-search text-white"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  }
+    // 1. Traer datos
+   
+
+    // 3. Capturar apertura del modal y poblarlo
+    const modal = document.getElementById('detalleModal');
+    let datosPrePedidoSeleccionado = null;
+    modal.addEventListener('show.bs.modal', event => {
+      const button = event.relatedTarget;
+      const nroPedido = JSON.parse(decodeURIComponent(button.getAttribute('data-user')));
+   fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/SearchPrePedidoDetalleByNroPrePedidoAsync?'+ new URLSearchParams({ nroPrePedido: nroPedido }))
+      .then(r => r.json())
+     .then(detalle => {
+      datosPrePedidoSeleccionado = detalle;
+
+     const articulos = detalle.lArticulo ?? [];
+
+  const filasArticulos = articulos.map(a => {
+
+    return `
+      <tr>
+          <td>
+          ${a.imagen ? `
+            <div class="image-container">
+              <img src="${a.imagen}" alt="Producto" class="product-image" style="width: 70px; height: auto; object-fit: contain;">
+            </div>
+          ` : `
+            <div class="image-container">
+              <img src="img/producto-sin-imagen.jpg" alt="Producto" class="product-image" style="width: 50px; height: auto; object-fit: contain;">
+            </div>
+          `}
+        </td>
+        <td>${a.codigo}</td>
+        <td>${a.color}</td>
+        <td>${a.modelo}</td>
+        <td colspan="8">${a.curva}</td>
+        <td>${a.precioSugerido?.toFixed(2)}</td>
+        <td>${a.precioMayorista?.toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
+      document.getElementById('modal-body').innerHTML = `
+  <div class="prepedido-ficha">
+    <div class="header-row">
+    <div><strong>Fecha Registro:</strong> ${detalle.fechaRegistro ?? '-'}</div>
+      <div><strong>Vendedor:</strong> ${detalle.codvendedor}</div>
+    </div>
+
+    <div><strong>Nro Pedido:</strong> ${detalle.nroPrePedido}</div>
+
+    <div class="section">
+      <div class="section-title">Cliente</div>
+      <div class="d-flex justify-content-between">
+        <div><strong>Nombres:</strong> ${detalle.ocliente.nomCliente}</div>
+        <div><strong>Nro Documento:</strong> ${detalle.ocliente.nroDocumento}</div>
+      </div>
+    </div>
+     <div class="section">
+      <div class="section-title">Fabricante </div>
+      <div class="d-flex justify-content-between">
+        <div><strong>Nombres:</strong> ${detalle.ofabricante.codFabricante}</div>
+        <div><strong>Nro Documento:</strong> ${detalle.ofabricante.nomFabricante}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Artículos</div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Coleccion</th>
+              <th>Modelo</th>
+              <th>Color</th>
+              <th colspan="8"> Curva</th>
+              <th>Precio Suge.</th>
+              <th>Precio Venta</th>
+ 
+            </tr>
+          </thead>
+          <tbody>
+            ${filasArticulos}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-row">
+      <div><strong>Responsable:</strong> ${detalle.nomClienteResponsable}</div>
+      <div><strong>Fecha Confirmación:</strong> ${detalle.fechaConfirmacion}</div>
+    </div>
+  </div>
+      `;
+    })
+    .catch(console.error);
+});
+  //Metodo de buscador por caaja de texto
+    document.getElementById('buscador').addEventListener('input', function () {
+  const filtro = this.value.toLowerCase();
+  const filas = document.querySelectorAll('#data-body tr');
+
+  filas.forEach(fila => {
+    const textoFila = fila.textContent.toLowerCase();
+    fila.style.display = textoFila.includes(filtro) ? '' : 'none';
+  });
+});
+  
+// Función para convertir imagen a base64
+async function convertirImagenABase64(url) {
+  try {
+   const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), { mode: 'cors' });
+    const blob = await response.blob();
+
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn("⚠️ Error al convertir imagen:", url, error);
+    return null;
+  }
+}
+
+// Método para imprimir la fila seleccionada
+async function imprimirProformaDesdePopup() {
+ 
+    const spinner = document.getElementById('spinner-overlay');
+  spinner.style.display = 'flex'; // Mostrar spinner
+
+  
+  // Cerrar modal al iniciar proceso
+  const modalElement = document.getElementById('detalleModal');
+  const modalInstance = bootstrap.Modal.getInstance(modalElement);
+  modalInstance.hide();
+  
+try {
+  // const response = await fetch('http://localhost:5232/api/ProcesoPrePedido/GenerarPdfImpresionPrePedido', {
+  
+  const response = await fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GenerarPdfImpresionPrePedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datosPrePedidoSeleccionado)
+    });
+
+    const link = await response.text();
+
+    if (link.startsWith("http")) {
+      window.open(link, '_blank');
+
+      Swal.fire({
+        icon: 'success',
+        text: '✅ Pedido registrado con éxito. Abriendo PDF...',
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        text: '❌ No se pudo registrar el pedido. Intenta nuevamente.',
+      });
+    }
+  } catch (err) {
+    console.error("Error al registrar pedido", err);
+    Swal.fire({
+      icon: 'error',
+      text: '❌ Error al registrar el pedido. Consulta la consola.',
+    });
+  } finally {
+    spinner.style.display = 'none'; // Ocultar spinner siempre al final
+  }
+}
+  </script>
+</body>
+</html>
