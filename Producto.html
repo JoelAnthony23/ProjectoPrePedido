@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabla con datos de API</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+  th, td {
+    white-space: nowrap; /* Evita que el contenido se rompa en varias líneas */
+  }
+      h2, h4,h5 {
+      color: #d46321;
+    }
+    /* Botón sólido color Azaleia */
+.btn-azaleia {
+  background-color: #e26c20;
+  color: white;
+  border-radius: 50px;
+  padding: 8px 20px;
+  border: none;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-azaleia:hover {
+  background-color: #c45d1c;
+  color: white;
+}
+
+/* Botón outline Azaleia */
+.btn-azaleia-outline {
+  background-color: white;
+  color: #e26c20;
+  border: 2px solid #e26c20;
+  border-radius: 50px;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.btn-azaleia-outline:hover {
+  background-color: #e26c20;
+  color: white;
+}
+/* Encabezado color Azaleia */
+.azaleia-header {
+  background-color: #e26c20 !important; /* Color principal Azaleia */
+  color: white !important;
+}
+
+.azaleia-header th {
+  background-color: #e26c20 !important;
+  color: white !important;
+}
+
+.btn-campania {
+    background-color: #d46321;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-campania:hover {
+    background-color: 	#b34710;
+  }
+  th, td {
+      white-space: nowrap;
+    }
+
+    h2, h4, h5 {
+      color: #d46321;
+    }
+
+    .btn-azaleia {
+      background-color: #e26c20;
+      color: white;
+      border-radius: 50px;
+      padding: 8px 20px;
+      border: none;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-azaleia:hover {
+      background-color: #c45d1c;
+      color: white;
+    }
+
+    .btn-azaleia-outline {
+      background-color: white;
+      color: #e26c20;
+      border: 2px solid #e26c20;
+      border-radius: 50px;
+      padding: 8px 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-azaleia-outline:hover {
+      background-color: #e26c20;
+      color: white;
+    }
+
+    .btn-campania {
+      background-color: #e26c20 !important;
+      color: white !important;
+    }
+
+    .btn-campania:hover{
+      background-color: #e26c20 !important;
+      color: white !important;
+    }
+   .table-custom {
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.table-custom th {
+  background-color: #e26c20;
+  color: white;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 12px;
+  border: none;
+}
+
+.table-custom td {
+  background-color: white;
+  border: none;
+  padding: 14px;
+  vertical-align: middle;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  font-size: 14px;
+  color: #333;
+}
+
+.table-custom tr:hover td {
+  background-color: #f1ac7e; /* naranja claro */
+  transition: background-color 0.3s ease;
+}
+
+.product-image {
+  max-width: 60px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  border: 2px solid #e26c20;
+}
+
+.text-muted {
+  color: #c45d1c;
+  font-size: 13px;
+}
+.image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.image-container .product-image {
+  max-width: 60px;
+  border-radius: 8px;
+  border: 2px solid #e26c20;
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+
+.image-container:hover .zoom-preview {
+  display: block;
+}
+
+.zoom-preview {
+  display: none;
+  position: absolute;
+  top: -10px;
+  left: 70px;
+  z-index: 1000;
+  width: 180px; /* antes 220px */
+  border-radius: 8px;
+  border: 2px solid #e26c20;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  background-color: white;
+  padding: 6px;
+}
+
+.zoom-preview img {
+  width: 100%; /* mejor usar 100% para llenar el contenedor */
+  border-radius: 6px;
+}
+.btn-azaleia {
+  background-color: #e26c20;
+  color: white;
+  border-radius: 50px;
+  padding: 10px 24px;
+  font-weight: 500;
+  font-size: 15px;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-azaleia:hover {
+  background-color: #c45d1c;
+  transform: translateY(-1px);
+}
+#spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+}
+
+.spinner-backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+.spinner-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+/* Spinner color Azaleia */
+.spinner-azaleia {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+  color: #e26c20;
+}
+
+/* Remueve cualquier hover no deseado */
+.spinner-azaleia:hover {
+  background: none !important;
+  box-shadow: none !important;
+}
+#tabla-campania-body tr {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+#tabla-campania-body tr:hover {
+  background-color: #ffe5d0 !important; /* naranja claro */
+}
+#spinner-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.4); /* Fondo oscurecido */
+  width: 100%;
+  height: 100%;
+  z-index: 1100;
+}
+
+.spinner-border.orange {
+  color: #e26c20;
+  width: 4rem;
+  height: 4rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -2rem;
+  margin-left: -2rem;
+}
+  .modal-content {
+    border-radius: 1rem;
+  }
+  .modal-header {
+    border-bottom: none;
+  }
+  .modal-footer {
+    border-top: none;
+  }
+
+</style>
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+         <div    class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0" style="color:#e26c20;">Producto</h2>
+
+        <div class="btn-group" role="group" aria-label="Acciones de producto">
+            <button type="button" class="btn btn-azaleia"  onclick="abrirFormularioCatalogo()">
+            <i class="bi bi-plus-lg me-2"></i>Agregar Producto
+            </button>
+ 
+        </div>
+      </div>
+    <div class="mb-3">
+        <input type="text" id="buscador-catalogo" class="form-control" placeholder="Buscar">
+      </div>
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="table table-bordered table-hover align-middle w-100">
+        <thead class="azaleia-header text-white">
+          <tr>
+            <th>Codigo</th>
+            <th>Producto</th>
+            <th>FechaInicio</th>
+            <th>FechaFin</th>
+            <th>NroDocumento</th>
+            <th>Fabricante</th>
+             <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody id="data-body"></tbody>
+      </table>
+    </div>
+     <button type="button" class="btn btn-azaleia" onclick="window.location.href='Gestionar.html'">
+            <i class="bi bi-arrow-left"></i> Regresar
+      </button>
+  </div>
+
+  <!-- Modal -->
+
+<!-- Modal definido en el HTML -->
+<div class="modal fade" id="modalFormularioCatalogo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Registrar Producto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="modal-body-catalogo">
+        <!-- Contenido dinámico aquí -->
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-azaleia" onclick="generarPrePedido()">💾 Registrar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+   <!-- Modal para Campaña -->
+<div class="modal fade" id="detalleModalCampania" tabindex="-1" aria-labelledby="detalleModalCampaniaLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg">
+      <!-- Encabezado -->
+      <div class="modal-header" style="background-color: #e26c20; color: white; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <h5 class="modal-title fw-bold text-white" id="detalleModalCampaniaLabel">
+          <i class="bi bi-bullseye me-2"></i>Selecciona una Campaña
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <!-- Cuerpo -->
+      <div class="modal-body px-4 py-3">
+        <div class="input-group mb-3">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" id="buscador-campania" class="form-control border-start-0" placeholder="Buscar por código o nombre...">
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light text-uppercase text-secondary small">
+              <tr>
+                <th style="width: 30%;">Código</th>
+                <th>Nombre de Campaña</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-campania-body" class="table-group-divider">
+              <tr><td colspan="2" class="text-center text-muted py-4">Cargando campañas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!------------------------------------- -->
+
+   <!-- Modal para Fabricante -->
+<!-- Modal para Fabricante con scroll mejorado -->
+<div class="modal fade" id="detalleModalFabricante" tabindex="-1" aria-labelledby="detalleModalFabricanteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      
+      <!-- Header fijo -->
+      <div class="modal-header sticky-top" style="background-color: #e26c20; color: white; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <h5 class="modal-title fw-bold text-white" id="detalleModalFabricanteLabel">
+          <i class="bi bi-truck me-2"></i>Selecciona un Fabricante
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <!-- Body con scroll -->
+      <div class="modal-body px-4 py-3" style="max-height: 60vh; overflow-y: auto;">
+        <div class="input-group mb-3 shadow-sm">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" id="buscador-fabricante" class="form-control border-start-0" placeholder="Buscar por código o nombre...">
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle table-striped">
+            <thead class="text-uppercase text-secondary small" style="background-color: #f4f4f4;">
+              <tr>
+                <th style="width: 35%;">Código</th>
+                <th style="width: 65%;">Fabricante</th>
+                <th style="width: 35%;">Procedencia</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-fabricante-body">
+              <tr><td colspan="2" class="text-center text-muted py-4">Cargando fabricantes...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer fijo -->
+      <div class="modal-footer border-top-0">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!------------------------------------- -->
+
+   <!-- Modal para detalle del catalogo -->
+<div class="modal fade" id="modalDetalleCatalogo" tabindex="-1" aria-labelledby="modalDetalleCatalogoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-azaleia text-white">
+        <h5 class="modal-title fw-bold" id="modalDetalleCatalogoLabel">Detalle del Producto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-custom w-100 align-middle">
+            <thead class="azaleia-header text-white">
+              <tr>
+                <th>Imagen</th>
+                <th>Marca</th>
+                <th>Colección</th>
+                <th>Línea</th>
+                <th>Referencia</th>
+                <th>Color</th>
+                <th>Producto</th>
+
+              </tr>
+            </thead>
+            <tbody id="tabla-detalle-catalogo"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!------------------------------------- -->
+
+ <!----------------------SPINNER---------------------------------->
+ 
+<div id="spinner-overlay">
+  <div class="spinner-border orange" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+</div>
+ <!-------------------------------------------------------->
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Tu script después de que Bootstrap ya existe -->
+<script>
+//<!------------------------------------------------------------->
+// Variable global para el código del vendedor
+let codvendedor = "";
+
+// Validar sesión y mostrar nombre de usuario
+window.addEventListener('DOMContentLoaded', () => {
+  const usuario = localStorage.getItem('usuario');
+  if (!usuario) {
+    alert('⚠️ Sesión no válida. Por favor, inicia sesión.');
+    window.location.href = 'login.html';
+    return;
+  }
+  codvendedor = usuario;
+  const span = document.getElementById('nombre-usuario');
+  if (span) span.textContent = codvendedor;
+});
+
+// Spinner
+function mostrarSpinner() {
+  document.getElementById('spinner-overlay').style.display = 'block';
+}
+
+function ocultarSpinner() {
+  document.getElementById('spinner-overlay').style.display = 'none';
+}
+
+// Encabezados esperados para validar Excel
+const columnasEsperadas = [
+  "Marca",
+  "CodColeccion",
+  "NomColeccion",
+  "CodLinea",
+  "NomLinea",
+  "CodReferenciaLinea",
+  "NomReferenciaLinea",
+  "CodColor",
+  "NomColor"
+];
+
+function validarEncabezados(jsonData) {
+  if (!jsonData || jsonData.length === 0) return false;
+  const encabezadosExcel = Object.keys(jsonData[0]);
+  const faltantes = columnasEsperadas.filter(col => !encabezadosExcel.includes(col));
+  if (faltantes.length > 0) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Formato inválido',
+      html: `Faltan columnas:<ul>${faltantes.map(col => `<li>${col}</li>`).join('')}</ul>`
+    });
+    return false;
+  }
+  return true;
+}
+
+// Cargar datos del catálogo
+const tbody = document.getElementById('data-body');
+const url = 'https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GetBusquedaCatalogoAsync';
+//const url = 'http://localhost:5232/api/ProcesoPrePedido/GetBusquedaCatalogoAsync';
+
+mostrarSpinner(); // ⏳ Mostrar antes de empezar la carga
+
+fetch(url)
+  .then(r => r.json())
+  .then(data => {
+    pintarTabla(data);
+  })
+  .catch(error => {
+    console.error(error);
+    tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center">Error al cargar los datos</td></tr>';
+  })
+  .finally(() => {
+    ocultarSpinner(); // ✅ Ocultar al terminar, incluso si hubo error
+  });
+  
+async function pintarTabla(datos) {
+  tbody.innerHTML = '';
+  for (const u of datos) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.codCatalogo}</td>
+      <td>${u.nombreCatalogo}</td>
+      <td>${u.fechaInicio}</td>
+      <td>${u.fechaFin}</td>
+      <td>${u.nroDocumento}</td>
+      <td>${u.razonSocial}</td>
+      
+
+      <td><button class="btn btn-sm btn-azaleia-outline ver-detalle" data-catalogo='${encodeURIComponent(u.codCatalogo)}'><i class="bi bi-search"></i></button></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function actualizarCampanias() {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Error ${response.status}`);
+    const data = await response.json();
+    pintarTabla(data);
+
+  } catch (error) {
+    console.error('Error actualizando campañas:', error);
+    tbody.innerHTML = '<tr><td colspan="4">Error al recargar campañas</td></tr>';
+  }
+}
+
+
+
+// Filtro buscador catálogo
+const buscadorCatalogo = document.getElementById('buscador-catalogo');
+if (buscadorCatalogo) {
+  buscadorCatalogo.addEventListener('input', function () {
+    const filtro = this.value.toLowerCase();
+    document.querySelectorAll('#data-body tr').forEach(fila => {
+      const textoFila = fila.textContent.toLowerCase();
+      fila.style.display = textoFila.includes(filtro) ? '' : 'none';
+    });
+  });
+}
+
+// Modal y formulario
+let nroGenerado = "";
+
+async function obtenerNumeroPrePedido() {
+  try {
+    const response = await fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GenerarCorrelativoCatalogoAsync');
+    const data = await response.json();
+    nroGenerado = data.nroPrePedido;
+    const inputCodigo = document.getElementById('Codigo-catalogo');
+    if (inputCodigo) inputCodigo.value = nroGenerado;
+  } catch (error) {
+    console.error('Error generando correlativo:', error);
+  }
+}
+
+const contenidoFormulario = `
+<div class="container">
+    <!-- Aquí va solo el formulario, NO otro modal -->
+    <!-- Catálogo -->
+    <div class="form-section">
+      <h2 class="fw-bold mb-0">Producto</h2>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="Codigo-catalogo">Código Producto:</label>
+          <input type="text" id="Codigo-catalogo" class="form-control" readonly>
+        </div>
+        <div class="col-md-6">
+          <label for="NombreCatalogo">Nombre Producto:</label>
+          <input type="text" id="NombreCatalogo" class="form-control" placeholder="Ingrese Producto">
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaña -->
+    <div class="form-section">
+      <h2 class="fw-bold mb-0">Campaña</h2>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <label for="CodigoCampania">Código Campaña:</label>
+          <input type="text" id="CodigoCampania" class="form-control" placeholder="Ingrese Código">
+        </div>
+        <div class="col-md-6">
+          <label for="Campania">Nombre Campaña:</label>
+          <input type="text" id="Campania" class="form-control" placeholder="Ingrese Campaña">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="button" class="btn btn-campania w-100" onclick="abrirModalSecundario()">Buscar Campaña</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+          <h2 class="fw-bold mb-0">Fabricante</h2>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="CodigoCampania">Código Fabricante:</label>
+              <input type="text" id="CodigoFabricante" class="form-control" placeholder="Ingrese Codigo">
+            </div>
+            <div class="col-md-6">
+              <label for="Campania">Nombre Fabricante:</label>
+              <input type="text" id="Fabricante" class="form-control" placeholder="Ingrese Fabricante">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="button" class="btn btn-campania w-100" onclick="abrirModalFabricanteSecundario()">Buscar Fabricante</button>
+            </div>
+          </div>
+        </div>
+
+    <!-- Productos -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      
+    </div>
+
+    <div class="mb-3">
+      <input type="file" id="input-excel" accept=".xlsx, .xls" class="form-control mb-3">
+      <input type="text" id="buscador-articulo" class="form-control mb-3" placeholder="🔍 Buscar por artículo...">
+    </div>
+
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="table table-custom align-middle w-100">
+        <thead class="azaleia-header text-white">
+          <tr>
+            <th>Imagen</th><th>Marca</th><th>Cod. Colección</th><th>Colección</th>
+            <th>Cod. Línea</th><th>Línea</th><th>Cod. Referencia</th><th>Referencia</th>
+            <th>Cod. Color</th><th>Color</th><th>Producto</th>
+          </tr>
+        </thead>
+        <tbody id="data-body-excel"></tbody>
+      </table>
+    </div>
+  </div>
+`;
+
+function abrirFormularioCatalogo() {
+  document.getElementById('modal-body-catalogo').innerHTML = contenidoFormulario;
+  const modal = new bootstrap.Modal(document.getElementById('modalFormularioCatalogo'));
+  modal.show();
+  obtenerNumeroPrePedido();
+
+  const buscadorArticulo = document.getElementById('buscador-articulo');
+  if (buscadorArticulo) {
+    buscadorArticulo.addEventListener('input', function () {
+      const filtro = this.value.toLowerCase();
+      document.querySelectorAll('#data-body-excel tr').forEach(fila => {
+        const textoFila = fila.textContent.toLowerCase();
+        fila.style.display = textoFila.includes(filtro) ? '' : 'none';
+      });
+    });
+  }
+
+  const inputExcel = document.getElementById('input-excel');
+  if (inputExcel) {
+    inputExcel.addEventListener('change', async function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      mostrarSpinner();
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+          if (!validarEncabezados(jsonData)) return;
+          await renderArticulosDesdeExcel(jsonData);
+        } catch (error) {
+          console.error("Error procesando archivo:", error);
+        } finally {
+          ocultarSpinner();
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+}
+
+const urlSinImg = `https://vteximagenes.blob.core.windows.net/proyectohtml/img/producto-sin-imagen.jpg`;
+async function renderArticulosDesdeExcel(datos) {
+  const tbody = document.getElementById('data-body-excel');
+  tbody.innerHTML = '';
+  for (const row of datos) {
+    const articulo = `${row.NomReferenciaLinea}_${row.NomColor}`;
+    let imageUrl = '';
+    try {
+      const url = `https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GetBlobImageUrlAsync?nomArticulo=${encodeURIComponent(articulo)}`;
+      const response = await fetch(url);
+
+      imageUrl = response.ok ? await response.text() : '';
+    } catch {}
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+       <td>
+        ${imageUrl
+          ? `
+            <div class="image-container">
+              <img src="${imageUrl || urlSinImg}" alt="Producto" class="product-image">
+              <div class="zoom-preview">
+                <img src="${imageUrl || urlSinImg}" alt="Zoom Producto">
+              </div>
+            </div>
+            `
+          : 
+            `<div class="image-container">
+              <img src="${imageUrl || urlSinImg}" alt="Producto" class="product-image">
+              <div class="zoom-preview">
+                <img src="${imageUrl || urlSinImg}" alt="Zoom Producto">
+              </div>
+            </div>`
+        }
+      </td>
+      <td>${row.Marca}</td>
+      <td>${row.CodColeccion}</td>
+      <td>${row.NomColeccion}</td>
+      <td>${row.CodLinea}</td>
+      <td>${row.NomLinea}</td>
+      <td>${row.CodReferenciaLinea}</td>
+      <td>${row.NomReferenciaLinea}</td>
+      <td>${row.CodColor}</td>
+      <td>${row.NomColor}</td>
+      <td>${articulo}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+/*METODO PARA INSERTAR */
+async function generarPrePedido() {
+  const nombreCatalogo = document.getElementById('NombreCatalogo').value;
+  const codigoCampania = document.getElementById('CodigoCampania').value;
+  const codFabricante = document.getElementById('CodigoFabricante').value.trim();
+  const nombreFabricante = document.getElementById('Fabricante').value;
+
+  if (!nombreCatalogo || !codigoCampania|| !codFabricante|| !nombreFabricante) {
+    Swal.fire({ icon: 'error', text: 'Ingrese todo los campos' });
+    return;
+  }
+  const filas = document.querySelectorAll('#data-body-excel tr');
+  const articulosSeleccionados = Array.from(filas).map(fila => {
+    const cells = fila.cells;
+    return {
+      marca: cells[1].textContent.trim(),
+      codColeccion: cells[2].textContent.trim(),
+      nomColeccion: cells[3].textContent.trim(),
+      codLinea: cells[4].textContent.trim(),
+      nomLinea: cells[5].textContent.trim(),
+      codReferenciaLinea: cells[6].textContent.trim(),
+      nomReferenciaLinea: cells[7].textContent.trim(),
+      codColor: cells[8].textContent.trim(),
+      nomColor: cells[9].textContent.trim(),
+      desProducto: cells[10].textContent.trim(),
+      rutaImagen: fila.querySelector('img.product-image')?.src || ''
+    };
+  });
+
+  const pedido = {
+    CodCatalogo: nroGenerado,
+    nombreCatalogo,
+    codigoCampania,
+    codFabricante,
+    nombreFabricante,
+    lProductos: articulosSeleccionados
+  };
+
+  fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/InsertCatalogoAsync', {
+  //  fetch('http://localhost:5232/api/ProcesoPrePedido/InsertCatalogoAsync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(pedido)
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data === true) {
+        Swal.fire({ icon: 'success', text: '✅ Producto registrado con éxito.' });
+        limpiarFormulario();
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalFormularioCatalogo'));
+        modal.hide();
+        actualizarCampanias();
+      } else {
+        Swal.fire({ icon: 'error', text: 'No se pudo registrar el producto. Intenta nuevamente.' });
+      }
+    })
+    .catch(err => {
+      console.error("Error al registrar producto", err);
+      alert("❌ Error al registrar el producto. Consulta la consola para más detalles.");
+    });
+}
+
+/* METODO PARA LIMPIAR EL FORMULARIO */
+function limpiarFormulario() {
+  document.getElementById('CodigoCampania').value = '';
+  document.getElementById('Campania').value = '';
+  document.getElementById('CodigoFabricante').value = '';
+  document.getElementById('Fabricante').value = '';
+
+  document.getElementById('input-excel').value = '';
+  document.getElementById('data-body-excel').innerHTML = '';
+  document.getElementById('buscador-articulo').value = '';
+}
+/*------------===========================------------------ */
+
+/* METODO PARA ABRIR DETALLE DEL PRODUCTO */
+document.addEventListener('click', async function (e) {
+  const boton = e.target.closest('.ver-detalle');
+  if (!boton) return;
+  const nombreCrudo = boton.getAttribute('data-catalogo');
+  await cargarDetalleCatalogo(nombreCrudo);
+  const modal = new bootstrap.Modal(document.getElementById('modalDetalleCatalogo'));
+  modal.show();
+});
+
+async function cargarDetalleCatalogo(nombreCatalogo) {
+  const tablaBody = document.getElementById('tabla-detalle-catalogo');
+  tablaBody.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
+  try {
+    const url = `https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GetBusquedaCatalogoByIdDetalleAsync?catalogo=${encodeURIComponent(nombreCatalogo)}`;
+    const response = await fetch(url);
+    const productos = await response.json();
+    tablaBody.innerHTML = '';
+    if (!productos.length) {
+      tablaBody.innerHTML = '<tr><td colspan="5">No hay productos.</td></tr>';
+      return;
+    }
+
+    for (const p of productos) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+       <td>
+        ${p.rutaImagen
+          ? `
+            <div class="image-container">
+              <img src="${p.rutaImagen}" alt="Producto" class="product-image">
+              <div class="zoom-preview">
+                <img src="${p.rutaImagen}" alt="Zoom Producto">
+              </div>
+            </div>
+            `
+          : 
+            `<div class="image-container">
+              <img src="img/producto-sin-imagen.jpg" alt="Producto" class="product-image">
+              <div class="zoom-preview">
+                <img src="img/producto-sin-imagen.jpg" alt="Zoom Producto">
+              </div>
+            </div>`
+        }
+      </td>
+        <td>${p.marca}</td>
+        <td>${p.nomColeccion}</td>
+        <td>${p.nomLinea}</td>
+        <td>${p.nomReferenciaLinea}</td>
+        <td>${p.nomColor}</td>
+        <td>${p.desProducto}</td>
+      
+        
+      `;
+      tablaBody.appendChild(tr);
+    }
+  } catch (error) {
+    tablaBody.innerHTML = '<tr><td colspan="5">Error al cargar el detalle.</td></tr>';
+    console.error(error);
+  }
+}
+/*------------===========================------------------ */
+
+/* METODO PARA ABRIR POPUPP DE CAMPAÑIA */
+function abrirModalSecundario() {
+    const modalElement = document.getElementById('detalleModalCampania');
+
+    if (!modalElement) {
+      console.error('❌ El modal "modalBuscarCampania" no existe en el DOM.');
+      return;
+    }
+
+    const modal = new bootstrap.Modal(modalElement, {
+      backdrop: 'static', // puedes quitar esta línea si no la necesitas
+      keyboard: false
+    });
+
+    modal.show();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+  const API_URL = 'https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GetBusquedaCampaniaAsync';
+  const tablaBody = document.getElementById('tabla-campania-body');
+  const buscador = document.getElementById('buscador-campania');
+
+  async function cargarCampanias() {
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error('Error en la API');
+      const data = await response.json();
+
+      renderizarTabla(data);
+
+      // Filtro en buscador
+      buscador.addEventListener('input', () => {
+        const filtro = buscador.value.toLowerCase();
+        const filas = tablaBody.querySelectorAll('tr');
+        filas.forEach(fila => {
+          const texto = fila.textContent.toLowerCase();
+          fila.style.display = texto.includes(filtro) ? '' : 'none';
+        });
+      });
+
+    } catch (error) {
+      tablaBody.innerHTML = '<tr><td colspan="2" class="text-danger">Error al cargar campañas.</td></tr>';
+    }
+  }
+
+  function renderizarTabla(campanias) {
+    tablaBody.innerHTML = '';
+    campanias.forEach(c => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${c.codigoCampania}</td>
+        <td>${c.descripcion}</td>
+      `;
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', () => seleccionarCampania(c));
+      tablaBody.appendChild(tr);
+    });
+  }
+
+  function seleccionarCampania(campania) {
+    document.getElementById('CodigoCampania').value = campania.codigoCampania;
+    document.getElementById('Campania').value = campania.descripcion;
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('detalleModalCampania'));
+    modal.hide();
+  }
+  // Carga inicial
+  cargarCampanias();
+});
+
+/*------------===========================------------------ */
+
+/* METODO PARA ABRIR POPUPP DE FABRICANTE */
+ function abrirModalFabricanteSecundario() {
+    const modalElement = document.getElementById('detalleModalFabricante');
+    if (!modalElement) {
+      console.error('❌ El modal "detalleModalFabricante" no existe en el DOM.');
+      return;
+    }
+      // Bloquea el contenido principal para lectores de pantalla
+  document.querySelector('body > .container')?.setAttribute('inert', '');
+
+    const modal = new bootstrap.Modal(modalElement, {
+      backdrop: 'static',
+      keyboard: false
+    });
+    modal.show();
+    // Mueve el foco al buscador del modal
+  modalElement.addEventListener('shown.bs.modal', () => {
+    modalElement.querySelector('#buscador-fabricante')?.focus();
+  });
+
+  // Quita el bloqueo cuando se cierra el modal
+  modalElement.addEventListener('hidden.bs.modal', () => {
+    document.querySelector('body > .container')?.removeAttribute('inert');
+  });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {   
+     const API_URL = 'https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GetBusquedaFabricanteAsync';
+    const tablaBodyFabricante = document.getElementById('tabla-fabricante-body');
+    const buscadorFabricante = document.getElementById('buscador-fabricante');
+
+    async function cargarFabricante() {
+      tablaBodyFabricante.innerHTML = `
+        <tr id="spinner-fabricante-row">
+          <td colspan="3" class="text-center py-4">
+            <div class="spinner-border text-warning" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </td>
+        </tr>`;
+
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Error en la API');
+        const data = await response.json();
+
+        tablaBodyFabricante.innerHTML = '';
+
+        if (data.length === 0) {
+          tablaBodyFabricante.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-4">No se encontraron fabricantes.</td></tr>';
+          return;
+        }
+
+        data.forEach(c => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${c.codFabricante}</td>
+            <td>${c.razonSocial}</td>
+            <td>${c.nombreProcedencia}</td>`;
+          tr.style.cursor = 'pointer';
+          tr.addEventListener('click', () => seleccionarFabricante(c));
+          tablaBodyFabricante.appendChild(tr);
+        });
+      } catch (error) {
+        tablaBodyFabricante.innerHTML = '<tr><td colspan="3" class="text-danger text-center py-4">❌ Error al cargar fabricante.</td></tr>';
+        console.error("Error al cargar fabricantes:", error);
+      }
+
+         // Filtro en buscador
+      buscadorFabricante.addEventListener('input', () => {
+        const filtro = buscadorFabricante.value.toLowerCase();
+        const filas = tablaBodyFabricante.querySelectorAll('tr');
+        filas.forEach(fila => {
+          const texto = fila.textContent.toLowerCase();
+          fila.style.display = texto.includes(filtro) ? '' : 'none';
+        });
+      });
+    }
+
+    function seleccionarFabricante(fabricante) {
+      document.getElementById('CodigoFabricante').value = fabricante.codFabricante;
+      document.getElementById('Fabricante').value = fabricante.razonSocial;
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('detalleModalFabricante'));
+      modal.hide();
+    }
+
+    // Carga inicial del modal
+    cargarFabricante();
+  });
+/*------------===========================------------------ */
+
+</script>
+
+</body>
+</html>
