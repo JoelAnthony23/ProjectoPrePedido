@@ -92,6 +92,25 @@
         height: 140px;
       }
     }
+    .card-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+}
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 200px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.card img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
   </style>
 </head>
 <body>
@@ -103,9 +122,11 @@
    
     <div id="galeria" class="galeria">
       SIN IMÁGENES...
+    
     </div>
+        <div id="galeriaRecibida" class="card-gallery"></div>
   </div>
-
+  
   <script>
     function redireccionarDespuesDeSeleccionar() {
     // Puedes validar que se haya seleccionado al menos una imagen si lo deseas
@@ -116,6 +137,30 @@
       alert("No se seleccionaron imágenes.");
     }
   }
+  document.addEventListener('DOMContentLoaded', () => {
+  const galeria = document.getElementById('galeriaRecibida');
+  const data = localStorage.getItem('imagenesSubidas');
+  if (!data) return;
+
+  const imagenes = JSON.parse(data);
+  galeria.innerHTML = '';
+
+  imagenes.forEach(img => {
+    // URL base donde están alojadas tus imágenes en Azure (ajústala)
+    const urlImagen = `https://vteximagenes.blob.core.windows.net/imgazaleia/${img.nombre}`;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${urlImagen}" alt="Imagen subida">
+      <p><strong>${img.nombre}</strong></p>
+    `;
+    galeria.appendChild(card);
+  });
+
+  localStorage.removeItem('imagenesSubidas');
+});
+
   </script>
 </body>
 </html>
