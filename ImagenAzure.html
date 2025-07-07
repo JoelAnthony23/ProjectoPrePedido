@@ -9,6 +9,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Inter font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root {
       --azaleia-orange: #e86f27;
@@ -90,6 +91,19 @@
       display: inline-block;
     }
 
+    .image-container .product-image {
+  max-width: 70px;
+  border-radius: 8px;
+  border: 2px solid #e26c20;
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+
+.image-container:hover .zoom-preview {
+  display: block;
+}
+
+
     .product-image {
       width: 40px;
       height: auto;
@@ -109,6 +123,10 @@
       box-shadow: 0 0 8px rgba(0,0,0,0.15);
       border-radius: 6px;
     }
+    .zoom-preview img {
+  width: 100%; /* mejor usar 100% para llenar el contenedor */
+  border-radius: 6px;
+}
 
     @media (max-width: 768px) {
       table {
@@ -135,6 +153,70 @@
     box-shadow: 0 0 6px rgba(0,0,0,0.1);
   }
 }
+.btn-azaleia {
+  background-color: #e26c20;
+  color: white;
+  border-radius: 50px;
+  padding: 8px 20px;
+  border: none;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+}
+
+.btn-azaleia:hover {
+  background-color: #c45d1c;
+  color: white;
+}
+
+/* Botón outline Azaleia */
+.btn-azaleia-outline {
+  background-color: white;
+  color: #e26c20;
+  border: 2px solid #e26c20;
+  border-radius: 50px;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.btn-azaleia-outline:hover {
+  background-color: #e26c20;
+  color: white;
+}
+.product-image {
+  width: 120px;       /* Aumenta el ancho */
+  height: auto;       /* Mantiene la proporción */
+  cursor: pointer;
+  border-radius: 6px;
+  transition: transform 0.2s ease;
+}
+.product-image:hover {
+  transform: scale(1.2); /* Agranda un 20% */
+  z-index: 5;
+}
+.card-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 4px;
+    }
+    .oculto {
+  display: none;
+}
+
   </style>
 </head>
 <body>
@@ -148,11 +230,11 @@
     <span class="text-muted">o haz clic para seleccionarlas</span>
     <input type="file" id="fileInput" accept="image/*" multiple>
   </div>
-  <button onclick="subirImagenes()">Subir imágenes</button>
+  <button type="button" class="btn btn-azaleia" onclick="subirImagenes()">Subir imágenes</button>
 
   <!-- Tabla -->
-  <div class="table-scrollable">
-    <table>
+  <div id="tablaImagenes" class="table-scrollable">
+    <table > 
       <thead>
         <tr>
           <th>NRO</th>
@@ -162,27 +244,31 @@
           <th>FECHA</th>
         </tr>
       </thead>
-      <tbody id="tablaImagenes">
+      <tbody id="cuerpoTablaImagenes">
         <!-- Filas dinámicas -->
       </tbody>
     </table>
   </div>
 
+  <div id="galeriaSubida" class="card-gallery oculto"></div>
+
   <!-- Script -->
   <script>
     let contador = 1;
-    const tabla = document.getElementById('tablaImagenes');
+    const tabla = document.getElementById('cuerpoTablaImagenes');
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
+    const galeriaSubida = document.getElementById('galeriaSubida');
     const nombresImagenes = [];
-
+    const archivosSeleccionados = [];
+  
     function agregarFila(file, url) {
       const nombre = file.name.split('.')[0];
       const extension = '.' + file.name.split('.').pop();
       const fecha = new Date().toLocaleDateString('es-PE');
-
+  
       nombresImagenes.push({ nombre: nombre });
-
+  
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${contador++}</td>
@@ -199,33 +285,31 @@
         <td>${fecha}</td>
       `;
       tabla.appendChild(row);
-
-      // Asignar eventos de zoom dinámicamente
+  
+      // Zoom dinámico
       const img = row.querySelector('.product-image');
       const zoom = row.querySelector('.zoom-preview');
-
-      img.addEventListener("mouseenter", function () {
-        zoom.style.display = "block";
-      });
-      img.addEventListener("mouseleave", function () {
-        zoom.style.display = "none";
-      });
-     
+  
+      img.addEventListener("mouseenter", () => zoom.style.display = "block");
+      img.addEventListener("mouseleave", () => zoom.style.display = "none");
     }
-
-
- const archivosSeleccionados = [];
+  
     function procesarArchivos(files) {
       for (let file of files) {
         if (file.type.startsWith('image/')) {
           const url = URL.createObjectURL(file);
           agregarFila(file, url);
-          archivosSeleccionados.push(file); // Guardar para POST
-          console.log(archivosSeleccionados);
+          archivosSeleccionados.push(file);
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Archivo no válido',
+            text: `Solo se permiten imágenes. El archivo "${file.name}" fue omitido.`,
+          });
         }
       }
     }
-
+  
     // Drag & Drop
     ['dragenter', 'dragover'].forEach(eventName => {
       dropzone.addEventListener(eventName, e => {
@@ -233,81 +317,122 @@
         dropzone.classList.add('dragover');
       });
     });
-
+  
     ['dragleave', 'drop'].forEach(eventName => {
       dropzone.addEventListener(eventName, e => {
         e.preventDefault();
         dropzone.classList.remove('dragover');
       });
     });
-
+  
     dropzone.addEventListener('drop', e => {
       procesarArchivos(e.dataTransfer.files);
     });
-
+  
     fileInput.addEventListener('change', e => {
       procesarArchivos(e.target.files);
     });
-
+  
     function subirImagenes() {
-      if (archivosSeleccionados.length === 0 || nombresImagenes.length === 0) {
-        alert("No hay imágenes para subir.");
-        return;
-      }
+  if (archivosSeleccionados.length === 0 || nombresImagenes.length === 0) {
+    Swal.fire({
+      icon: 'warning',
+      text: 'No hay imágenes para subir.'
+    });
+    return;
+  }
 
-      const formData = new FormData();
-      
-      // Adjunta archivos y nombres
-      for (let i = 0; i < archivosSeleccionados.length; i++) {
-        formData.append("archivos", archivosSeleccionados[i]);            // archivos[]
-           
-      }
-      nombresImagenes.forEach(n => {    // nombres[]
-        formData.append("nombres", n.nombre);
-      });
+  const formData = new FormData();
+  archivosSeleccionados.forEach(file => {
+    formData.append("archivos", file);
+  });
 
-     // formData.append("contenedor", "subirimagenazure"); // Nombre del contenedor
-
-      fetch("http://localhost:5232/api/ProcesoPrePedido/SubirImagenesAsync", {
-        method: "POST",
-        body: formData
-      })
-      .then(async res => {
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          return res.json();
-        } else {
-          const text = await res.text();
-          throw new Error("Respuesta no es JSON: " + text);
-        }
-      })
-      .then(data => {
-        console.log("✅ Respuesta:", data);
-        alert(data.mensaje || "Imágenes subidas correctamente");
-      })
-      .catch(err => {
-        console.error("❌ Error al subir imágenes:", err);
-        alert("Error al subir las imágenes");
-      });
+  Swal.fire({
+    title: 'Subiendo imágenes...',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    didOpen: () => {
+      Swal.showLoading();
     }
-    // Mover el zoom flotante junto al cursor
-  document.addEventListener("mousemove", function (e) {
-    const zooms = document.querySelectorAll(".zoom-preview");
-    zooms.forEach(zoom => {
-      if (zoom.style.display === "block") {
-        const zoomWidth = zoom.offsetWidth;
-        const zoomHeight = zoom.offsetHeight;
-        const padding = 20;
+  });
 
-        // Verifica si hay espacio suficiente abajo
-        const fitsBelow = e.clientY + padding + zoomHeight < window.innerHeight;
-        const fitsRight = e.clientX + padding + zoomWidth < window.innerWidth;
+  fetch("https://appsapventasapi.azurewebsites.net/api/AzureBlobStorage/SubirImagenesMasivaAsync", {
+    method: "POST",
+    body: formData
+  })
+  .then(async res => {
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return res.json();
+    } else {
+      const text = await res.text();
+      throw new Error("Respuesta no es JSON: " + text);
+    }
+  })
+  .then(data => {
+    Swal.close();
 
-        zoom.style.top = `${fitsBelow ? e.clientY + padding : e.clientY - zoomHeight - padding}px`;
-        zoom.style.left = `${fitsRight ? e.clientX + padding : e.clientX - zoomWidth - padding}px`;
-      }
+    Swal.fire({
+      icon: 'success',
+      text: data.mensaje || 'Imágenes subidas correctamente.',
+      confirmButtonText: 'Aceptar'
+    });
+
+    // ✅ Ocultar tabla y mostrar galería
+    document.getElementById("tablaImagenes").classList.add("oculto");
+    document.getElementById("galeriaSubida").classList.remove("oculto");
+
+    mostrarGaleria();
+
+    // ✅ Limpiar tabla y arrays
+    tabla.innerHTML = "";
+    contador = 1;
+    archivosSeleccionados.length = 0;
+    nombresImagenes.length = 0;
+    fileInput.value = "";
+  })
+  .catch(err => {
+    Swal.close();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Error al subir las imágenes.'
     });
   });
+}
+
+    function mostrarGaleria() {
+    galeriaSubida.innerHTML = ''; // Limpiar
+    archivosSeleccionados.forEach(file => {
+      const url = URL.createObjectURL(file);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${url}" alt="Imagen subida">
+        <p><strong>${file.name}</strong></p>
+      `;
+      galeriaSubida.appendChild(card);
+    });
+  }
+  
+    // Mover el zoom flotante junto al cursor
+    document.addEventListener("mousemove", function (e) {
+      const zooms = document.querySelectorAll(".zoom-preview");
+      zooms.forEach(zoom => {
+        if (zoom.style.display === "block") {
+          const zoomWidth = zoom.offsetWidth;
+          const zoomHeight = zoom.offsetHeight;
+          const padding = 20;
+  
+          const fitsBelow = e.clientY + padding + zoomHeight < window.innerHeight;
+          const fitsRight = e.clientX + padding + zoomWidth < window.innerWidth;
+  
+          zoom.style.top = `${fitsBelow ? e.clientY + padding : e.clientY - zoomHeight - padding}px`;
+          zoom.style.left = `${fitsRight ? e.clientX + padding : e.clientX - zoomWidth - padding}px`;
+        }
+      });
+    });
   </script>
+  
 </body>
 </html>
