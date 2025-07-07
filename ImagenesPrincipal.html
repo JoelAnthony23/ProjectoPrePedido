@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Subida de Imágenes - Azaleia</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffaf7;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .contenedor {
+      border: 3px dotted #e66b00;
+      border-radius: 20px;
+      padding: 30px;
+      background-color: #ffffff;
+      max-width: 1200px;
+      margin: auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .btn-subir {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      background-color: #e66b00;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease, transform 0.2s;
+    }
+
+    .btn-subir:hover {
+      background-color: #cc5f00;
+      transform: scale(1.05);
+    }
+
+    .galeria {
+      border: 2px dashed #e66b00;
+      border-radius: 12px;
+      height: auto;
+      min-height: 300px;
+      margin-top: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-weight: bold;
+      font-size: 1.2rem;
+      overflow-y: auto;
+      padding: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .galeria.llena {
+      justify-content: flex-start;
+    }
+
+    .imagen-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 180px;
+      height: 180px;
+      position: relative;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease;
+    }
+
+    .imagen-card:hover {
+      transform: scale(1.03);
+    }
+
+    .imagen-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    @media (max-width: 768px) {
+      .imagen-card {
+        width: 140px;
+        height: 140px;
+      }
+    }
+    .card-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+}
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 200px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.card img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+  </style>
+</head>
+<body>
+  <div class="contenedor">
+    <button class="btn-subir" onclick="window.location.href = 'ImagenAzure.html'">
+      GESTIONAR IMÁGENES
+    </button>
+  
+   
+    <div id="galeria" class="galeria">
+      SIN IMÁGENES...
+    
+    </div>
+        <div id="galeriaRecibida" class="card-gallery"></div>
+  </div>
+  
+  <script>
+    function redireccionarDespuesDeSeleccionar() {
+    // Puedes validar que se haya seleccionado al menos una imagen si lo deseas
+    const input = document.getElementById('inputImagenes');
+    if (input.files.length > 0) {
+      window.location.href = 'ImagenAzure.html';
+    } else {
+      alert("No se seleccionaron imágenes.");
+    }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+  const galeria = document.getElementById('galeriaRecibida');
+  const data = localStorage.getItem('imagenesSubidas');
+  if (!data) return;
+
+  const imagenes = JSON.parse(data);
+  galeria.innerHTML = '';
+
+  imagenes.forEach(img => {
+    // URL base donde están alojadas tus imágenes en Azure (ajústala)
+    const urlImagen = `https://vteximagenes.blob.core.windows.net/imgazaleia/${img.nombre}`;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${urlImagen}" alt="Imagen subida">
+      <p><strong>${img.nombre}</strong></p>
+    `;
+    galeria.appendChild(card);
+  });
+
+  localStorage.removeItem('imagenesSubidas');
+});
+
+  </script>
+</body>
+</html>

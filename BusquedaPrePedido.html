@@ -143,11 +143,32 @@
   color: white !important;
 }
 
+/* Aumenta el ancho del modal en tablets (768px a 1024px aprox.) */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .modal-dialog.ancho-responsive {
+    max-width: 95% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 
+/* Mejora también para pantallas grandes */
+@media (min-width: 1200px) {
+  .modal-dialog.ancho-responsive {
+    max-width: 98% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media (orientation: landscape) and (max-width: 1366px) {
+  .modal-dialog.ancho-responsive {
+    max-width: 95% !important;
+  }
+}
 </style>
 </head>
 <body class="bg-light p-4">
-  <div class="container">
+  <div class="container-fluid px-3 px-md-4">
     <h2 class="mb-4">Lista de Pre-Pedido</h2>
  <div class="mb-3">
     <input type="text" id="buscador" class="form-control" placeholder="Buscar pre-pedido por número pedido, cliente, modelo...">
@@ -177,7 +198,7 @@
 
 
   <div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-fullscreen-sm-down modal-xl modal-dialog-scrollable ancho-responsive">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="detalleModalLabel">Detalle del Pre-Predido</h5>
@@ -302,9 +323,11 @@
     function pintarTabla(datos) {
       const tbody = document.getElementById('data-body');
       tbody.innerHTML = '';   
+
          // limpia por si acaso
       datos.forEach(u => {
         const tr = document.createElement('tr');
+        
         tr.innerHTML = `
           <td>${u.fechaRegistro}</td>
           <td>${u.nroPrePedido}</td>
@@ -330,102 +353,120 @@
       });
     }
   }
-    // 1. Traer datos
-   
 
-    // 3. Capturar apertura del modal y poblarlo
-    const modal = document.getElementById('detalleModal');
-    let datosPrePedidoSeleccionado = null;
-    modal.addEventListener('show.bs.modal', event => {
-      const button = event.relatedTarget;
-      const nroPedido = JSON.parse(decodeURIComponent(button.getAttribute('data-user')));
-   fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/SearchPrePedidoDetalleByNroPrePedidoAsync?'+ new URLSearchParams({ nroPrePedido: nroPedido }))
-      .then(r => r.json())
-     .then(detalle => {
+   
+// Delegación: abrir modal al hacer clic en una fila (menos el botón de detalle)
+document.getElementById('data-body').addEventListener('click', function (e) {
+  const fila = e.target.closest('tr');
+  const esBoton = e.target.closest('button'); // Evita doble apertura si se clickea el botón
+  if (!fila || esBoton) return;
+
+  const nroPedido = fila.children[1]?.textContent?.trim(); // Columna 1 = NroPrePedido
+
+  if (!nroPedido) return;
+
+  // Crear un evento personalizado para forzar apertura del modal usando la misma lógica
+  const modalElement = document.getElementById('detalleModal');
+  const modal = new bootstrap.Modal(modalElement);
+
+  // Hacer fetch del detalle del pre-pedido igual que al presionar el botón
+  fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/SearchPrePedidoDetalleByNroPrePedidoAsync?' + new URLSearchParams({ nroPrePedido: nroPedido }))
+    .then(r => r.json())
+    .then(detalle => {
       datosPrePedidoSeleccionado = detalle;
 
-     const articulos = detalle.lArticulo ?? [];
+      const articulos = detalle.lArticulo ?? [];
 
-  const filasArticulos = articulos.map(a => {
-
-    return `
-      <tr>
-          <td>
-          ${a.imagen ? `
-            <div class="image-container">
-              <img src="${a.imagen}" alt="Producto" class="product-image" style="width: 70px; height: auto; object-fit: contain;">
-            </div>
-          ` : `
-            <div class="image-container">
-              <img src="img/producto-sin-imagen.jpg" alt="Producto" class="product-image" style="width: 50px; height: auto; object-fit: contain;">
-            </div>
-          `}
-        </td>
-        <td>${a.codigo}</td>
-        <td>${a.color}</td>
-        <td>${a.modelo}</td>
-        <td colspan="8">${a.curva}</td>
-        <td>${a.precioSugerido?.toFixed(2)}</td>
-        <td>${a.precioMayorista?.toFixed(2)}</td>
-      </tr>
-    `;
-  }).join('');
-      document.getElementById('modal-body').innerHTML = `
-  <div class="prepedido-ficha">
-    <div class="header-row">
-    <div><strong>Fecha Registro:</strong> ${detalle.fechaRegistro ?? '-'}</div>
-      <div><strong>Vendedor:</strong> ${detalle.codvendedor}</div>
-    </div>
-
-    <div><strong>Nro Pedido:</strong> ${detalle.nroPrePedido}</div>
-
-    <div class="section">
-      <div class="section-title">Cliente</div>
-      <div class="d-flex justify-content-between">
-        <div><strong>Nombres:</strong> ${detalle.ocliente.nomCliente}</div>
-        <div><strong>Nro Documento:</strong> ${detalle.ocliente.nroDocumento}</div>
-      </div>
-    </div>
-     <div class="section">
-      <div class="section-title">Fabricante </div>
-      <div class="d-flex justify-content-between">
-        <div><strong>Nombres:</strong> ${detalle.ofabricante.codFabricante}</div>
-        <div><strong>Nro Documento:</strong> ${detalle.ofabricante.nomFabricante}</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Artículos</div>
-      <div class="table-responsive">
-        <table class="table table-bordered table-sm mb-0">
-          <thead>
-            <tr>
-              <th>Imagen</th>
-              <th>Coleccion</th>
-              <th>Modelo</th>
-              <th>Color</th>
-              <th colspan="8"> Curva</th>
-              <th>Precio Suge.</th>
-              <th>Precio Venta</th>
- 
-            </tr>
-          </thead>
-          <tbody>
-            ${filasArticulos}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="footer-row">
-      <div><strong>Responsable:</strong> ${detalle.nomClienteResponsable}</div>
-      <div><strong>Fecha Confirmación:</strong> ${detalle.fechaConfirmacion}</div>
-    </div>
-  </div>
+      const filasArticulos = articulos.map(a => {
+        return `
+        <tr>
+            <td>
+            ${a.imagen ? `
+              <div class="image-container">
+                <img src="${a.imagen}" alt="Producto" class="product-image" style="width: 70px; height: auto; object-fit: contain;">
+              </div>
+            ` : `
+              <div class="image-container">
+                <img src="img/producto-sin-imagen.jpg" alt="Producto" class="product-image" style="width: 50px; height: auto; object-fit: contain;">
+              </div>
+            `}
+          </td>
+          <td>${a.codigo}</td>
+          <td>${a.color}</td>
+          <td>${a.modelo}</td>
+          <td colspan="8">${a.curva}</td>
+          <td>${a.precioSugerido?.toFixed(2)}</td>
+          <td>${a.precioMayorista?.toFixed(2)}</td>
+        </tr>
       `;
+      }).join('');
+
+      document.getElementById('modal-body').innerHTML = `
+        <div class="prepedido-ficha">
+          <div class="header-row">
+            <div><strong>Fecha Registro:</strong> ${detalle.fechaRegistro ?? '-'}</div>
+            <div><strong>Vendedor:</strong> ${detalle.codvendedor}</div>
+          </div>
+
+          <div><strong>Nro Pedido:</strong> ${detalle.nroPrePedido}</div>
+
+          <div class="section">
+            <div class="section-title">Cliente</div>
+            <div class="d-flex justify-content-between">
+              <div><strong>Nombres:</strong> ${detalle.ocliente.nomCliente}</div>
+              <div><strong>Nro Documento:</strong> ${detalle.ocliente.nroDocumento}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Fabricante </div>
+            <div class="d-flex justify-content-between">
+              <div><strong>Nombres:</strong> ${detalle.ofabricante.codFabricante}</div>
+              <div><strong>Nro Documento:</strong> ${detalle.ofabricante.nomFabricante}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Artículos</div>
+            <div class="table-responsive">
+              <table class="table table-bordered table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>Imagen</th>
+                    <th>Coleccion</th>
+                    <th>Modelo</th>
+                    <th>Color</th>
+                    <th colspan="8"> Curva</th>
+                    <th>Precio Suge.</th>
+                    <th>Precio Venta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filasArticulos}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="footer-row">
+            <div><strong>Responsable:</strong> ${detalle.nomClienteResponsable}</div>
+            <div><strong>Fecha Confirmación:</strong> ${detalle.fechaConfirmacion}</div>
+          </div>
+        </div>
+      `;
+
+      modal.show();
     })
-    .catch(console.error);
+    .catch(error => {
+      console.error("Error al cargar detalle del pedido desde fila:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo cargar el detalle del pre-pedido.',
+      });
+    });
 });
+
   //Metodo de buscador por caaja de texto
     document.getElementById('buscador').addEventListener('input', function () {
   const filtro = this.value.toLowerCase();
@@ -457,20 +498,16 @@ async function convertirImagenABase64(url) {
 
 // Método para imprimir la fila seleccionada
 async function imprimirProformaDesdePopup() {
- 
-    const spinner = document.getElementById('spinner-overlay');
+  const spinner = document.getElementById('spinner-overlay');
   spinner.style.display = 'flex'; // Mostrar spinner
 
-  
-  // Cerrar modal al iniciar proceso
+  // Cerrar modal si está abierto
   const modalElement = document.getElementById('detalleModal');
   const modalInstance = bootstrap.Modal.getInstance(modalElement);
-  modalInstance.hide();
-  
-try {
-  // const response = await fetch('http://localhost:5232/api/ProcesoPrePedido/GenerarPdfImpresionPrePedido', {
-  
-  const response = await fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GenerarPdfImpresionPrePedido', {
+  if (modalInstance) modalInstance.hide();
+
+  try {
+    const response = await fetch('https://appsapventasapi.azurewebsites.net/api/ProcesoPrePedido/GenerarPdfImpresionPrePedido', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datosPrePedidoSeleccionado)
@@ -479,28 +516,40 @@ try {
     const link = await response.text();
 
     if (link.startsWith("http")) {
-      window.open(link, '_blank');
+      // Abrir en nueva pestaña o en el navegador del sistema
+      const nuevaVentana = window.open(link, '_blank');
 
-      Swal.fire({
-        icon: 'success',
-        text: '✅ Pedido registrado con éxito. Abriendo PDF...',
-      });
+      // Si no se pudo abrir (popup bloqueado)
+      if (!nuevaVentana) {
+        Swal.fire({
+          icon: 'warning',
+          text: '⚠️ El visor fue bloqueado por el navegador. Habilita pop-ups para ver el PDF.',
+        });
+      } else {
+        Swal.fire({
+          icon: 'success',
+          text: '✅ Se generó el PDF con éxito. Abriendo...',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
     } else {
       Swal.fire({
         icon: 'error',
-        text: '❌ No se pudo registrar el pedido. Intenta nuevamente.',
+        text: '❌ No se pudo generar el PDF. Intenta nuevamente.',
       });
     }
   } catch (err) {
-    console.error("Error al registrar pedido", err);
+    console.error("Error al generar el PDF", err);
     Swal.fire({
       icon: 'error',
-      text: '❌ Error al registrar el pedido. Consulta la consola.',
+      text: '❌ Error al generar el PDF. Consulta la consola.',
     });
   } finally {
-    spinner.style.display = 'none'; // Ocultar spinner siempre al final
+    spinner.style.display = 'none'; // Ocultar spinner
   }
 }
+
   </script>
 </body>
 </html>
