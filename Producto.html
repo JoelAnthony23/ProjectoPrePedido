@@ -282,6 +282,7 @@
   .modal-footer {
     border-top: none;
   }
+
 @media (max-width: 768px) {
       .d-flex.flex-md-row {
         flex-direction: column !important;
@@ -299,14 +300,38 @@
     .detalle-modal-custom {
   max-width: 1140px;
 }
+/* Escritorio grande */
+@media (min-width: 1200px) {
+  .modal-dialog-wide {
+    max-width: 96%;
+  }
+}
 
-/* En tablets (pantallas medianas) ampliar modal a casi todo el ancho 
+/* Para pantallas grandes (web) */
+@media (min-width: 992px)   and (max-width: 1199px) {
+  .modal-dialog-wide {
+    max-width: 90%;
+  }
+}
+
+/* Para tablets en modo horizontal y vertical */
 @media (min-width: 768px) and (max-width: 991px) {
-  .detalle-modal-custom {
-    max-width: 95% !important;
+  .modal-dialog-wide {
+    max-width: 95%;
     margin: 1rem auto;
   }
-}*/
+}
+
+/* Para celulares pequeños */
+@media (max-width: 767px) {
+  .modal-dialog-wide {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+
 .producto-card {
   position: relative;
   border: 1px solid #f2f2f2;
@@ -365,23 +390,76 @@
 }
 
 .producto-card .overlay {
+   bottom: -100%;
+  transition: bottom 0.4s ease;
   position: absolute;
-  bottom: -100%;
   left: 0;
   width: 100%;
   background-color: #fff;
   border-top: 1px solid #eee;
   padding: 12px 16px;
-  transition: bottom 0.4s ease;
   font-size: 13px;
   color: #444;
   text-align: left;
+    z-index: 1;
 }
 
 .producto-card:hover .overlay {
   bottom: 0;
 }
 
+.producto-card.show-detail .overlay {
+  bottom: 0;
+}
+
+.producto-card .btn-toggle-detalle {
+  background-color: #fff3eb;
+  color: #d46321;
+  border: 1px solid #e26c20;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto 10px auto;
+  transition: all 0.3s ease;
+}
+
+.producto-card.show-detail .btn-toggle-detalle {
+  background-color: #e26c20;
+  color: white;
+}
+
+.modal-dialog-centered-custom {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - 1rem); /* margen superior e inferior */
+}
+
+@media (max-width: 768px) {
+  .modal-dialog-wide {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 8px;
+  }
+
+  .modal-content {
+    border-radius: 0;
+    height: 100vh;
+  }
+
+  .modal-body {
+    overflow-y: auto;
+    max-height: calc(100vh - 160px); /* Ajusta según altura de header/footer */
+    padding: 1rem;
+  }
+
+  .modal-header,
+  .modal-footer {
+    padding: 1rem;
+  }
+}
 
 </style>
 </head>
@@ -424,7 +502,7 @@
 
 <!-- Modal definido en el HTML -->
 <div class="modal fade" id="modalFormularioCatalogo" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-wide modal-dialog-centered-custom">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title fw-bold">Registrar Producto</h5>
@@ -1025,19 +1103,24 @@ async function cargarDetalleCatalogo(nombreCatalogo) {
 
       card.innerHTML = `
 
-       <div class="badge-top">Azaleia</div>
-            <img src="${p.rutaImagen || 'img/producto-sin-imagen.jpg'}" class="producto-img" alt="Producto">
-            <div class="info">
-              <h6>${p.desProducto}</h6>
-              <p>${p.nomColor}</p>
-            </div>
-            <div class="overlay">
-              <p><strong>Marca:</strong> ${p.marca}</p>
-              <p><strong>Colección:</strong> ${p.nomColeccion}</p>
-              <p><strong>Línea:</strong> ${p.nomLinea}</p>
-              <p><strong>Referencia:</strong> ${p.nomReferenciaLinea}</p>
+    <div class="badge-top">Azaleia</div>
+      <img src="${p.rutaImagen || 'img/producto-sin-imagen.jpg'}" class="producto-img" alt="Producto">
+      <div class="info">
+        <h6>${p.desProducto}</h6>
+        <p>${p.nomColor}</p>
       </div>
-      `;
+    
+          <button class="btn-toggle-detalle btn btn-light btn-sm rounded-circle border" title="Ver detalle">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+  
+    <div class="overlay">
+      <p><strong>Marca:</strong> ${p.marca}</p>
+      <p><strong>Colección:</strong> ${p.nomColeccion}</p>
+      <p><strong>Línea:</strong> ${p.nomLinea}</p>
+      <p><strong>Referencia:</strong> ${p.nomReferenciaLinea}</p>
+    </div>
+        `;
 
       columna.appendChild(card);
       contenedor.appendChild(columna);
@@ -1297,6 +1380,66 @@ if (buscadorDetalleCatalogo) {
     });
   });
 }
+
+// Función para habilitar swipe en pantallas táctiles
+function habilitarSwipeParaTarjetas() {
+  const tarjetas = document.querySelectorAll('.producto-card');
+
+  tarjetas.forEach(card => {
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    card.addEventListener('touchstart', e => {
+      touchStartY = e.changedTouches[0].clientY;
+    });
+
+    card.addEventListener('touchend', e => {
+      touchEndY = e.changedTouches[0].clientY;
+
+      if (touchStartY - touchEndY > 50) {
+        // Swipe hacia arriba (mostrar)
+        card.classList.add('show-detail');
+        const icon = card.querySelector('.btn-toggle-detalle i');
+        if (icon) icon.className = 'bi bi-chevron-up';
+      } else if (touchEndY - touchStartY > 50) {
+        // Swipe hacia abajo (ocultar)
+        card.classList.remove('show-detail');
+        const icon = card.querySelector('.btn-toggle-detalle i');
+        if (icon) icon.className = 'bi bi-chevron-down';
+      }
+    });
+  });
+}
+
+// Ejecutar swipe solo si es pantalla táctil (tablet o móvil)
+if ('ontouchstart' in document.documentElement) {
+  document.addEventListener('DOMContentLoaded', () => {
+    habilitarSwipeParaTarjetas();
+  });
+}
+
+// Evento para alternar el detalle con botón flechita (funciona en todos los dispositivos)
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('.btn-toggle-detalle');
+  if (!btn) return;
+
+  const card = btn.closest('.producto-card');
+  const isActive = card.classList.contains('show-detail');
+
+  // Cierra todos los demás detalles primero
+  document.querySelectorAll('.producto-card').forEach(c => {
+    c.classList.remove('show-detail');
+    const icon = c.querySelector('.btn-toggle-detalle i');
+    if (icon) icon.className = 'bi bi-chevron-down';
+  });
+
+  // Si estaba cerrado, lo abrimos
+  if (!isActive) {
+    card.classList.add('show-detail');
+    const icon = card.querySelector('.btn-toggle-detalle i');
+    if (icon) icon.className = 'bi bi-chevron-up';
+  }
+});
 </script>
 
 </body>
