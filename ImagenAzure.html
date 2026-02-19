@@ -51,42 +51,53 @@
       border-color: #d65e1f;
     }
 
-   .card-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-  margin-top: 20px;
-}
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .toolbar .counter {
+      margin-left: auto;
+      font-size: .95rem;
+      color: #6c757d;
+      font-weight: 600;
+    }
 
-.card {
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
-  background-color: #fff;
-}
+    .card-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
 
-.card:hover {
-  transform: scale(1.03);
-}
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+      background-color: #fff;
+      position: relative;
+    }
+    .card:hover { transform: scale(1.03); }
 
-.card img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 6px;
-  margin-bottom: 8px;
-}
+    .card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
 
-.card p {
-  font-size: 0.85rem;
-  color: #333;
-  margin: 0;
-  word-break: break-word;
-}
-
+    .card p {
+      font-size: 0.85rem;
+      color: #333;
+      margin: 0;
+      word-break: break-word;
+    }
 
     .btn-azaleia {
       background-color: #e26c20;
@@ -96,16 +107,35 @@
       border: none;
       transition: background-color 0.3s ease;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 16px;
+      margin-bottom: 10px;
+    }
+    .btn-azaleia:hover { background-color: #c45d1c; color: white; }
+
+    .btn-clear {
+      border-radius: 50px;
     }
 
-    .btn-azaleia:hover {
-      background-color: #c45d1c;
-      color: white;
+    .btn-remove {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      border: none;
+      background: #ffffff;
+      color: #c0392b;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 6px rgba(0,0,0,.15);
+      cursor: pointer;
     }
+    .btn-remove:hover { background: #ffeaea; }
   </style>
 </head>
 <body>
+
   <div id="dropzone" class="dropzone">
     <div class="mb-3">
       <i class="bi bi-cloud-arrow-up-fill fs-1 text-primary"></i>
@@ -115,46 +145,106 @@
     <input type="file" id="fileInput" accept="image/*" multiple>
   </div>
 
-  <button type="button" class="btn btn-azaleia" onclick="subirImagenes()">Subir imágenes</button>
+  <div class="toolbar">
+    <button type="button" class="btn btn-azaleia" onclick="window.location.href='ImagenesPrincipal.html'">
+      <i class="bi bi-arrow-left"></i> Regresar
+    </button>
+
+    <button id="btnSubir" type="button" class="btn btn-azaleia" onclick="subirImagenes()" disabled>
+      <i class="bi bi-cloud-arrow-up"></i> Subir imágenes
+    </button>
+
+    <button id="btnVaciar" type="button" class="btn btn-outline-secondary btn-clear" onclick="vaciarLista()" disabled>
+      <i class="bi bi-trash3"></i> Vaciar lista
+    </button>
+
+    <div id="counterSel" class="counter">0 seleccionadas</div>
+  </div>
 
   <div id="galeriaSubida" class="card-gallery"></div>
 
   <script>
     let archivosSeleccionados = [];
 
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const galeriaSubida = document.getElementById('galeriaSubida');
+    const dropzone       = document.getElementById('dropzone');
+    const fileInput      = document.getElementById('fileInput');
+    const galeriaSubida  = document.getElementById('galeriaSubida');
+    const btnSubir       = document.getElementById('btnSubir');
+    const btnVaciar      = document.getElementById('btnVaciar');
+    const counterSel     = document.getElementById('counterSel');
+
+    function actualizarUI() {
+      const n = archivosSeleccionados.length;
+      btnSubir.disabled  = n === 0;
+      btnVaciar.disabled = n === 0;
+      counterSel.textContent = `${n} seleccionada${n !== 1 ? 's' : ''}`;
+    }
 
     function mostrarGaleria() {
       galeriaSubida.innerHTML = '';
-      archivosSeleccionados.forEach(file => {
+      archivosSeleccionados.forEach((file, idx) => {
         const url = URL.createObjectURL(file);
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
+          <button class="btn-remove" title="Quitar"><i class="bi bi-x-lg"></i></button>
           <img src="${url}" alt="Imagen subida">
           <p><strong>${file.name}</strong></p>
         `;
+        card.querySelector('.btn-remove').addEventListener('click', () => {
+          eliminarImagen(idx);
+        });
         galeriaSubida.appendChild(card);
       });
+      actualizarUI();
+    }
+
+    function existeEnLista(file) {
+      const key = file.name + '|' + file.size;
+      return archivosSeleccionados.some(f => f.name + '|' + f.size === key);
     }
 
     function procesarArchivos(files) {
+      let agregados = 0;
       for (let file of files) {
-        if (file.type.startsWith('image/')) {
-          archivosSeleccionados.push(file);
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Archivo no válido',
-            text: `Solo se permiten imágenes. El archivo "${file.name}" fue omitido.`,
-          });
+        if (!file.type.startsWith('image/')) {
+          Swal.fire({ icon: 'error', title: 'Archivo no válido', text: `Solo se permiten imágenes. "${file.name}" fue omitido.` });
+          continue;
         }
+        if (existeEnLista(file)) continue; // evitar duplicados por nombre+tamaño
+        archivosSeleccionados.push(file);
+        agregados++;
+      }
+      if (agregados === 0 && files.length > 0) {
+        // Ya estaban todos o eran inválidos
       }
       mostrarGaleria();
     }
 
+    function eliminarImagen(index) {
+      archivosSeleccionados.splice(index, 1);
+      mostrarGaleria();
+    }
+
+    function vaciarLista() {
+      if (archivosSeleccionados.length === 0) return;
+      Swal.fire({
+        icon: 'warning',
+        title: 'Vaciar lista',
+        text: '¿Quitar todas las imágenes seleccionadas?',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, vaciar',
+        cancelButtonText: 'Cancelar'
+      }).then(res => {
+        if (res.isConfirmed) {
+          archivosSeleccionados = [];
+          fileInput.value = '';
+          mostrarGaleria();
+        }
+      });
+    }
+
+    // Drag & drop
     ['dragenter', 'dragover'].forEach(eventName => {
       dropzone.addEventListener(eventName, e => {
         e.preventDefault();
@@ -177,58 +267,61 @@
       procesarArchivos(e.target.files);
     });
 
- function subirImagenes() {
-  if (archivosSeleccionados.length === 0) {
-    Swal.fire({
-      icon: 'warning',
-      text: 'No hay imágenes para subir.'
-    });
-    return;
-  }
+    async function subirImagenes() {
+      if (archivosSeleccionados.length === 0) {
+        Swal.fire({ icon: 'warning', text: 'No hay imágenes para subir.' });
+        return;
+      }
 
-  const formData = new FormData();
-  archivosSeleccionados.forEach(file => {
-    formData.append("archivos", file);
-  });
+      const formData = new FormData();
+      archivosSeleccionados.forEach(file => {
+        // La API espera "archivos" (como ya tenías)
+        formData.append("archivos", file);
+      });
 
-  Swal.fire({
-    title: 'Subiendo imágenes...',
-    allowOutsideClick: false,
-    allowEscapeKey: false,
-    didOpen: () => {
-      Swal.showLoading();
+      Swal.fire({
+        title: 'Subiendo imágenes...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const resp = await fetch("https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/AzureBlobStorage/SubirImagenesMasivaAsync", {
+          method: "POST",
+          body: formData
+        });
+
+        let data = null;
+        try { data = await resp.json(); } catch {}
+
+        Swal.close();
+
+        if (!resp.ok) {
+          throw new Error(data?.mensaje || 'Error HTTP ' + resp.status);
+        }
+
+        Swal.fire({
+          icon: 'success',
+          text: (data && data.mensaje) ? data.mensaje : 'Imágenes subidas correctamente.',
+          confirmButtonText: 'Aceptar'
+        });
+
+        // Limpiar selección tras subir
+        archivosSeleccionados = [];
+        fileInput.value = '';
+        galeriaSubida.innerHTML = '';
+        actualizarUI();
+
+      } catch (err) {
+        Swal.close();
+        console.error(err);
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Error al subir las imágenes.' });
+      }
     }
-  });
 
-  fetch("https://appsapventasapi.azurewebsites.net/api/AzureBlobStorage/SubirImagenesMasivaAsync", {
-    method: "POST",
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-    Swal.close();
-
-    Swal.fire({
-      icon: 'success',
-      text: data.mensaje || 'Imágenes subidas correctamente.',
-      confirmButtonText: 'Aceptar'
-    });
-
-    // ✅ Limpiar galería y datos después de subir correctamente
-    archivosSeleccionados = [];
-    fileInput.value = '';
-    galeriaSubida.innerHTML = '';
-  })
-  .catch(err => {
-    Swal.close();
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Error al subir las imágenes.'
-    });
-  });
-}
-
+    // Estado inicial
+    actualizarUI();
   </script>
 </body>
 </html>

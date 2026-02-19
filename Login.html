@@ -7,177 +7,393 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
+    /* ============================================
+       VARIABLES Y RESET
+       ============================================ */
+    :root {
+      --azaleia-primary: #d46321;
+      --azaleia-dark: #a9490f;
+      --azaleia-light: #fbeee6;
+      --azaleia-lighter: #fff5eb;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.03);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.04);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     html, body {
       height: 100%;
       margin: 0;
+      padding: 0;
     }
 
     body {
-      background: linear-gradient(135deg, #fff 0%, #fbeee6 100%);
+      background: linear-gradient(135deg, #ffffff 0%, var(--azaleia-lighter) 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-primary);
       display: flex;
-      justify-content: center;
       align-items: center;
-      font-family: "Segoe UI", sans-serif;
-      padding: 20px;
-      animation: fadeInBody 0.6s ease-in-out;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.4s ease-out;
     }
 
-    @keyframes fadeInBody {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
-    .login-box {
+    /* ============================================
+       CONTENEDOR PRINCIPAL
+       ============================================ */
+    .login-container {
       width: 100%;
-      max-width: 420px;
-      padding: 40px 30px;
+      max-width: 380px;
       background: #ffffff;
-      border-radius: 16px;
-      border: 2px solid rgba(212, 99, 33, 0.25);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-      animation: fadeInCard 0.8s ease;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+      padding: 2rem 1.75rem;
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes fadeInCard {
-      from { opacity: 0; transform: scale(0.95); }
-      to   { opacity: 1; transform: scale(1); }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .login-box img {
-      max-width: 160px;
+    /* ============================================
+       LOGO Y ENCABEZADO
+       ============================================ */
+    .login-logo {
+      display: block;
+      max-width: 140px;
       height: auto;
-      margin-bottom: 20px;
+      margin: 0 auto 1.5rem;
     }
 
-    h4 {
+    .login-title {
+      font-size: 1.375rem;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 30px;
-      font-size: 1.3rem;
+      color: var(--text-primary);
+      margin: 0 0 1.75rem;
       text-align: center;
+      letter-spacing: -0.01em;
+    }
+
+    /* ============================================
+       FORMULARIO
+       ============================================ */
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 0.375rem;
+      display: block;
     }
 
     .form-control {
-      height: 48px;
-      font-size: 1rem;
-    }
-
-    .btn-orange {
-      background-color: #d46321;
-      border: none;
-      color: #fff;
-      font-weight: 500;
+      height: 42px;
+      font-size: 0.9375rem;
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 12px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
+      padding: 0.5rem 0.875rem;
+      transition: all 0.15s ease;
+      background: #ffffff;
     }
 
-    .btn-orange:hover {
-      background-color: #a9490f;
+    .form-control:focus {
+      border-color: var(--azaleia-primary);
+      box-shadow: 0 0 0 3px rgba(212, 99, 33, 0.08);
+      outline: none;
     }
 
-    .text-end a {
-      font-size: 0.9rem;
-      color: #a9490f;
+    .form-control::placeholder {
+      color: #9ca3af;
+      font-size: 0.875rem;
     }
 
-    .text-end a:hover {
+    .mb-3 {
+      margin-bottom: 1.25rem;
+    }
+
+    /* ============================================
+       INPUT PASSWORD CON ICONO
+       ============================================ */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper .form-control {
+      padding-right: 2.75rem;
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 42px;
+      width: 42px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .password-toggle-btn:hover {
+      color: var(--azaleia-primary);
+    }
+
+    .password-toggle-btn:focus {
+      outline: none;
+    }
+
+    /* ============================================
+       BOTÓN PRINCIPAL
+       ============================================ */
+    .btn-primary-azaleia {
+      width: 100%;
+      height: 42px;
+      background: var(--azaleia-primary);
+      border: none;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-primary-azaleia:hover {
+      background: var(--azaleia-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(212, 99, 33, 0.25);
+    }
+
+    .btn-primary-azaleia:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary-azaleia:focus {
+      outline: 3px solid rgba(212, 99, 33, 0.15);
+      outline-offset: 2px;
+    }
+
+    /* ============================================
+       ENLACE OLVIDASTE CONTRASEÑA
+       ============================================ */
+    .forgot-password-link {
+      display: block;
+      text-align: right;
+      margin-top: 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--azaleia-primary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .forgot-password-link:hover {
+      color: var(--azaleia-dark);
       text-decoration: underline;
     }
 
-    .password-toggle {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
+    /* ============================================
+       MODAL
+       ============================================ */
+    .modal-content {
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-body p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .modal-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-primary {
+      background: var(--azaleia-primary);
       border: none;
-      font-size: 1rem;
-      cursor: pointer;
-      color: #d46321;
+      color: #ffffff;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.15s ease;
     }
 
-    @media (max-width: 768px) {
-      .login-box {
-        padding: 32px 24px;
-      }
+    .btn-primary:hover {
+      background: var(--azaleia-dark);
     }
 
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
     @media (max-width: 480px) {
-      .login-box {
-        padding: 24px 18px;
+      .login-container {
+        padding: 1.5rem 1.25rem;
       }
 
-      h4 {
-        font-size: 1.2rem;
+      .login-title {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
       }
 
       .form-control,
-      .btn-orange {
-        font-size: 1rem;
-        height: 48px;
-      }
-
-      .text-end a {
-        font-size: 0.85rem;
+      .btn-primary-azaleia {
+        height: 44px;
       }
     }
-    #passwordInput {
-  padding-right: 2.5rem;
-}
-.btn-link:focus {
-  box-shadow: none;
-}
 
-.input-group-text {
-  background-color: transparent;
-  border-left: 0;
-}
+    @media (max-width: 360px) {
+      .login-container {
+        padding: 1.25rem 1rem;
+      }
+    }
+
+    /* ============================================
+       UTILIDADES
+       ============================================ */
+    .text-center {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <div class="text-center mb-4">
-      <img src="img/azalaeia.jpeg" alt="Logo">
-    </div>
-    <h4>Iniciar sesión</h4>
+  
+  <div class="login-container">
+    <!-- Logo -->
+    <img src="img/azalaeia.jpeg" alt="Azaleia Logo" class="login-logo">
+    
+    <!-- Título -->
+    <h1 class="login-title">Iniciar sesión</h1>
 
+    <!-- Formulario -->
     <form id="login-form" novalidate>
+      <!-- Usuario -->
       <div class="mb-3">
         <label for="usuario" class="form-label">Usuario</label>
-        <input type="text" class="form-control" id="usuario" required autocomplete="username">
+        <input 
+          type="text" 
+          class="form-control" 
+          id="usuario" 
+          placeholder="Ingresa tu usuario"
+          required 
+          autocomplete="username"
+        >
       </div>
-    <div class="mb-3">
-          <label for="passwordInput" class="form-label">Contraseña</label>
-          <div class="input-group">
-            <input type="password" class="form-control" id="passwordInput" required autocomplete="current-password">
-            <span class="input-group-text bg-white border-start-0">
-              <button type="button" class="btn btn-link p-0 m-0 text-secondary" onclick="togglePassword()" tabindex="-1" style="font-size: 1.2rem;">
-                <i class="bi bi-eye" id="eyeIcon"></i>
-              </button>
-            </span>
-          </div>
-  </div>
-      <button type="submit" class="btn btn-orange w-100">Iniciar sesión</button>
+
+      <!-- Contraseña -->
+      <div class="mb-3">
+        <label for="passwordInput" class="form-label">Contraseña</label>
+        <div class="password-wrapper">
+          <input 
+            type="password" 
+            class="form-control" 
+            id="passwordInput" 
+            placeholder="Ingresa tu contraseña"
+            required 
+            autocomplete="current-password"
+          >
+          <button 
+            type="button" 
+            class="password-toggle-btn" 
+            onclick="togglePassword()" 
+            tabindex="-1"
+            aria-label="Mostrar/ocultar contraseña"
+          >
+            <i class="bi bi-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Botón Submit -->
+      <button type="submit" class="btn-primary-azaleia">
+        Iniciar sesión
+      </button>
+
+      <!-- Enlace olvidaste contraseña -->
+      <a href="#" class="forgot-password-link" data-bs-toggle="modal" data-bs-target="#detalleModal">
+        ¿Olvidaste tu contraseña?
+      </a>
     </form>
-
-    <div class="text-end mt-2">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#detalleModal">¿Olvidaste tu contraseña?</a>
-    </div>
   </div>
 
-  <!-- Modal -->
+  <!-- Modal Recuperar Contraseña -->
   <div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Recuperar contraseña</h5>
+          <h5 class="modal-title" id="detalleModalLabel">Recuperar contraseña</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
-          <p>Ingresa tu correo para restablecer tu contraseña:</p>
-          <input type="email" class="form-control" id="correo-recuperacion" placeholder="ejemplo@dominio.com" required>
+          <p>Ingresa tu correo electrónico para restablecer tu contraseña:</p>
+          <input 
+            type="email" 
+            class="form-control" 
+            id="correo-recuperacion" 
+            placeholder="ejemplo@dominio.com" 
+            required
+          >
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -187,17 +403,24 @@
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-
+    // ============================================
+    // TOGGLE PASSWORD VISIBILITY
+    // ============================================
     function togglePassword() {
-    const passwordInput = document.getElementById("passwordInput");
-  const eyeIcon = document.getElementById("eyeIcon");
+      const passwordInput = document.getElementById("passwordInput");
+      const eyeIcon = document.getElementById("eyeIcon");
 
-  const isHidden = passwordInput.type === "password";
-  passwordInput.type = isHidden ? "text" : "password";
-  eyeIcon.className = isHidden ? "bi bi-eye-slash" : "bi bi-eye";
-}
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      eyeIcon.className = isHidden ? "bi bi-eye-slash" : "bi bi-eye";
+    }
+
+    // ============================================
+    // INICIAR SESIÓN
+    // ============================================
     async function iniciarSesion(evt) {
       evt.preventDefault();
       localStorage.clear();
@@ -209,15 +432,20 @@
         Swal.fire({
           icon: 'warning',
           title: 'Campos requeridos',
-          text: 'Por favor, ingresa usuario y contraseña.'
+          text: 'Por favor, ingresa usuario y contraseña.',
+          confirmButtonColor: '#d46321'
         });
         return;
       }
 
-      Swal.fire({ title: 'Verificando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      Swal.fire({ 
+        title: 'Verificando...', 
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+      });
 
       try {
-        const resp = await fetch('https://appsapventasapi.azurewebsites.net/api/usuario/GetIniciarSesion', {
+        const resp = await fetch('https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/usuario/GetIniciarSesion', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ usuario, password })
@@ -232,28 +460,48 @@
             if (errorJson?.mensaje) mensaje = errorJson.mensaje;
           } catch {}
 
-          Swal.fire({ icon: 'error', title: 'Acceso denegado', text: mensaje });
+          Swal.fire({ 
+            icon: 'error', 
+            title: 'Acceso denegado', 
+            text: mensaje,
+            confirmButtonColor: '#d46321'
+          });
           return;
         }
 
         const data = await resp.json();
+        
         if (data.error === "Error en la credenciales") {
-          Swal.fire({ icon: 'error', title: 'Ingrese usuario/password correcto.', text: 'Error en las credenciales' });
+          Swal.fire({ 
+            icon: 'error', 
+            title: 'Credenciales incorrectas', 
+            text: 'Usuario o contraseña inválidos.',
+            confirmButtonColor: '#d46321'
+          });
         } else {
           localStorage.setItem('usuario', data.usuario);
           localStorage.setItem('rol', data.rol);
-       window.location.href = 'https://vteximagenes.blob.core.windows.net/proyectohtml/Dasboard.html';
-    //     window.location.href = 'file:///C:/Users/amendoza/OneDrive%20-%20CALZADOS%20AZALEIA%20PERU%20S.A/Escritorio/Proyecto%20Html/Dasboard.html';
-          
+          localStorage.setItem('area', data.area);
+          localStorage.setItem('emailCoorporativo', data.emailCoorporativo);
+        
+          // Redirigir al dashboard
+          window.location.href = 'Dasboard.html';
         }
 
       } catch (error) {
         Swal.close();
-        Swal.fire({ icon: 'error', title: 'Error de red', text: 'Ocurrió un problema de conexión. Intenta nuevamente.' });
-        console.error(error);
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'Error de conexión', 
+          text: 'Ocurrió un problema de red. Intenta nuevamente.',
+          confirmButtonColor: '#d46321'
+        });
       }
     }
 
+    // ============================================
+    // RECUPERAR CONTRASEÑA
+    // ============================================
     async function enviarCorreoRecuperacion() {
       const correo = document.getElementById('correo-recuperacion').value.trim();
       const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -262,13 +510,11 @@
         Swal.fire({
           icon: 'warning',
           title: 'Correo inválido',
-          text: 'Por favor, ingresa un correo válido.'
+          text: 'Por favor, ingresa un correo válido.',
+          confirmButtonColor: '#d46321'
         });
         return;
       }
-
-      // Aquí puedes agregar tu llamada real a la API
-    //  console.log('Enviando correo a:', correo);
 
       const modal = bootstrap.Modal.getInstance(document.getElementById('detalleModal'));
       modal.hide();
@@ -277,10 +523,14 @@
         icon: 'success',
         title: 'Correo enviado',
         text: 'Hemos enviado un enlace para restablecer tu contraseña.',
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#d46321'
       });
     }
 
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
     document.getElementById('login-form').addEventListener('submit', iniciarSesion);
   </script>
 </body>

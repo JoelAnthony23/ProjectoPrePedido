@@ -91,7 +91,7 @@
           <h2 class="fw-bold mb-0" style="color:#e26c20;">Campaña</h2>
           <div class="btn-group" role="group" aria-label="Acciones de producto">
             <button type="button" class="btn btn-azaleia" id="btnAgregar" data-bs-toggle="modal" data-bs-target="#detalleModal">
-              <i class="bi bi-plus-lg me-2"></i>Agregar 
+              <i class="bi bi-plus-lg me-2"></i>Agregar Campaña
             </button>
           </div>
         </div>
@@ -102,10 +102,14 @@
           <table class="table table-bordered table-hover align-middle w-100">
             <thead class="azaleia-header text-white">
               <tr>
-                <th>Codigo</th>
-                <th>Campaña</th>
-                <th>FechaInicio</th>
-                <th>FechaFin</th>
+                <th>NroSerie</th>
+                <th>NroFactura</th>
+                <th>FechEmision</th>
+                <th>Moneda</th>   
+                <th>V. Gravada</th>
+                <th>Igv</th>
+                <th>P. Total</th>
+                <th>Articulo</th>
               </tr>
             </thead>
             <tbody id="data-body"></tbody>
@@ -166,7 +170,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 const tbody = document.getElementById('data-body');
-let url = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/GetBusquedaCampaniaAsync';
+let url = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Factura/ListarFacturasElectronicasXMLAsync';
 
 mostrarSpinner(); // ⏳ Mostrar antes de empezar la carga
 
@@ -175,7 +179,8 @@ fetch(url)
   .then(data => {
     pintarTabla(data);
   })
-  .catch(error => {  
+  .catch(error => {
+    console.error(error);
     tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center">Error al cargar los datos</td></tr>';
   })
   .finally(() => {
@@ -188,10 +193,17 @@ function pintarTabla(datos) {
   datos.forEach(u => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${u.codigoCampania}</td>
-      <td>${u.descripcion}</td>
-      <td>${u.fechaInicio}</td>
-      <td>${u.fechaFin}</td>
+      <td>${u.nroSerie}</td>
+      <td>${u.nroFactura}</td>
+      <td>${u.fechEmision}</td>
+    
+          <td>${u.tipoMoneda}</td>
+     <td>${u.ventaGravada}</td>
+     <td>${u.igv}</td>
+     <td>${u.precioVentaTotal}</td>
+       <td>${u.articulo}</td>
+
+
     `;
     tbody.appendChild(tr);
   });
@@ -205,7 +217,7 @@ async function actualizarCampanias() {
     pintarTabla(data);
 
   } catch (error) {
-   // console.error('Error actualizando campañas:', error);
+    console.error('Error actualizando campañas:', error);
     tbody.innerHTML = '<tr><td colspan="4" class="text-danger">Error al recargar campañas.</td></tr>';
   }
 }
@@ -228,7 +240,7 @@ async function obtenerCodigoCampania() {
     codigoCampania = data.nroPrePedido;
     document.getElementById('codigoCampania').value = codigoCampania;
   } catch (error) {
-    //console.error('Error al obtener correlativo:', error);
+    console.error('Error al obtener correlativo:', error);
     document.getElementById('codigoCampania').value = 'ERROR';
   }
 }
@@ -287,7 +299,8 @@ setTimeout(() => {
       } else {
         Swal.fire({ icon: 'error', text: '❌ No se pudo registrar la campaña. Intenta nuevamente.' });
       }
-    } catch (err) {      
+    } catch (err) {
+      console.error("Error al registrar campaña:", err);
       Swal.fire({ icon: 'error', text: '❌ Error inesperado. Revisa la consola para más detalles.' });
     }
   });

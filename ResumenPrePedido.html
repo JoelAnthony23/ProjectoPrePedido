@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Resumen Pre-Pedido – Azaleia</title>
+
+  <!-- Bootstrap 5 + Iconos + ExcelJS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+
+  <style>
+    :root{
+      --az:#e66b00;
+      --az-dark:#cc5200;
+      --az-soft:#fff7f2;
+      --bar-h: 0px;
+    }
+
+    body{font-family:'Segoe UI',sans-serif;background:var(--az-soft);}
+    h2{color:var(--az-dark);margin-bottom:1rem;}
+
+    /* Barra de filtros fija arriba */
+    .filter-bar{
+      position: sticky;
+      top: 0;
+      z-index: 1100;
+      background: var(--az-soft);
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+    .filter-bar input{border-radius:8px;padding:8px 12px;border:1px solid #ccc}
+
+    .table-holder{ margin-top: var(--bar-h, 0px); }
+
+    .table-responsive-az{overflow-x:auto;width:100%;position:relative;}
+
+    .tabla-az{
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size:.85rem;
+    }
+
+    .tabla-az thead th{
+      position: sticky;
+      top: 0;
+      z-index: 1050;
+      background: var(--az);
+      color: #fff;
+      border: 1px solid #d35800;
+      box-shadow: 0 2px 0 rgba(0,0,0,.06);
+      background-clip: padding-box;
+    }
+
+    .tabla-az tbody td{border:1px solid #e5e5e5;padding:8px 10px;white-space:nowrap}
+    .tabla-az tbody tr:nth-child(even){background:#fafafa}
+    .tabla-az tbody tr:hover{background:#e4f1ff}
+
+    .btn-az{background:var(--az);color:#fff;border:none;border-radius:6px;padding:8px 16px}
+    .btn-az:hover{background:var(--az-dark)}
+
+    .tallas-principal th{ position: sticky; top: 0; z-index: 1049; background: var(--az); color:#fff; }
+    .tallas-sub th{ position: sticky; top: 40px; z-index: 1050; background: var(--az); color:#fff; }
+
+    /* Column manager modal */
+    .drag-item{
+      display:flex;align-items:center;gap:10px;
+      padding:8px 10px;border:1px solid #eee;border-radius:8px;background:#fff;margin-bottom:8px
+    }
+    .drag-handle{cursor:grab;color:#666}
+    .drag-item.dragging{opacity:.6;border-style:dashed}
+    .cm-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .small-muted{font-size:.85rem;color:#6c757d}
+    td.grouped-first{border-top-width:2px}
+
+    @media (min-width: 1200px){ .filter-bar { flex-wrap: nowrap; } }
+    .filter-bar .form-control { min-width: 160px; }
+    .filter-bar .form-control[type="date"] { min-width: 140px; }
+    .btn-toolbar { row-gap: 8px; }
+    .btn-group .btn, .d-flex.gap-2.flex-wrap .btn { min-width: 110px; }
+
+    /* ===== MultiSelect (tipo imagen) ===== */
+    .ms-wrap{ position:relative; min-width: 240px; }
+    .ms-input{
+      display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+      min-height: 31px;               /* similar a form-control-sm */
+      padding: 4px 34px 4px 10px;
+      border:1px solid #ccc; border-radius:8px; background:#fff;
+      cursor:pointer;
+    }
+    .ms-input:focus-within{ outline: 2px solid rgba(230,107,0,.25); border-color: var(--az); }
+    .ms-placeholder{ color:#888; font-size:.875rem; }
+    .ms-chip{
+      background:#ffe6d6; color:#7a2f00;
+      border:1px solid #ffcfb3;
+      border-radius:999px; padding:2px 8px; font-size:.8rem;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .ms-chip button{
+      border:none; background:transparent; color:#7a2f00;
+      padding:0; line-height:1; cursor:pointer;
+    }
+    .ms-caret{
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      color:#666;
+    }
+    .ms-panel{
+      position:absolute; left:0; right:0; top: calc(100% + 6px);
+      background:#fff; border:1px solid #ddd; border-radius:10px;
+      box-shadow:0 10px 25px rgba(0,0,0,.12);
+      z-index: 2000;
+      display:none;
+    }
+    .ms-panel.open{ display:block; }
+    .ms-search{
+      padding:8px;
+      border-bottom:1px solid #eee;
+    }
+    .ms-search input{
+      width:100%;
+      border-radius:8px;
+      border:1px solid #ddd;
+      padding:6px 10px;
+    }
+    .ms-list{
+      max-height: 240px;
+      overflow:auto;
+      padding:6px 8px;
+    }
+    .ms-item{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 6px;
+      border-radius:8px;
+    }
+    .ms-item:hover{ background:#f7f7f7; }
+    .ms-actions{
+      display:flex; justify-content:flex-end; gap:10px;
+      padding:10px;
+      border-top:1px solid #eee;
+    }
+    .ms-actions .btn{ border-radius:8px; }
+  </style>
+</head>
+
+<body class="container-fluid py-4">
+  <h2>Resumen de Pre-Pedidos</h2>
+
+  <!-- Filtros (STICKY) -->
+  <div class="filter-bar">
+    <div class="row row-cols-auto g-2 align-items-end">
+      <div class="col">
+        <label for="fIni" class="form-label mb-0 small">Desde</label>
+        <input type="date" id="fIni" class="form-control form-control-sm">
+      </div>
+      <div class="col">
+        <label for="fFin" class="form-label mb-0 small">Hasta</label>
+        <input type="date" id="fFin" class="form-control form-control-sm">
+      </div>
+
+      <div class="col">
+        <label class="form-label mb-0 small">Vendedor (multi)</label>
+        <div id="msVendedor"></div>
+      </div>
+
+      <!-- MULTISELECT: Colección -->
+      <div class="col">
+        <label class="form-label mb-0 small">Colección (multi)</label>
+        <div id="msColeccion"></div>
+      </div>
+
+      <!-- MULTISELECT: Fabricante -->
+      <div class="col">
+        <label class="form-label mb-0 small">Fabricante (multi)</label>
+        <div id="msFabricante"></div>
+      </div>
+
+      <!-- MULTISELECT: Marca -->
+      <div class="col">
+        <label class="form-label mb-0 small">Marca (multi)</label>
+        <div id="msMarca"></div>
+      </div>
+
+      <div class="col d-flex align-items-center">
+        <div class="form-check ms-1">
+          <input class="form-check-input" type="checkbox" id="chkGroup">
+          <label class="form-check-label small" for="chkGroup">Agrupar</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-2">
+      <div class="col">
+        <div class="d-flex justify-content-center justify-content-lg-start gap-2 flex-wrap">
+          <button id="btnBuscar" class="btn btn-az btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
+          <button id="btnColumnas" class="btn btn-outline-secondary btn-sm"><i class="bi bi-columns-gap me-1"></i>Columnas</button>
+          <button id="btnExcel" class="btn btn-az btn-sm"><i class="bi bi-file-earmark-excel-fill me-1"></i>Excel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="table-holder">
+    <div class="table-responsive-az">
+      <table class="table tabla-az table-sm mb-0">
+        <thead><tr id="theadRow"></tr></thead>
+        <tbody id="tbodyResumen"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal columnas -->
+  <div class="modal fade" id="columnModal" tabindex="-1" aria-labelledby="columnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="columnModalLabel"><i class="bi bi-columns-gap me-2"></i>Configurar columnas</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small-muted">Arrastra para reordenar. Marca o desmarca para mostrar/ocultar.</p>
+          <div id="columnList"></div>
+        </div>
+        <div class="modal-footer cm-actions">
+          <button id="cmShowAll" type="button" class="btn btn-outline-success btn-sm">Mostrar todas</button>
+          <button id="cmHideAll" type="button" class="btn btn-outline-secondary btn-sm">Ocultar todas</button>
+          <button id="cmReset"   type="button" class="btn btn-outline-warning btn-sm">Restablecer</button>
+          <div class="flex-grow-1"></div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button id="cmApply" type="button" class="btn btn-az" data-bs-dismiss="modal">Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+/* =======================
+   MultiSelect (tipo imagen)
+   ======================= */
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, (m) => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+
+function createMultiSelect(mountId, {
+  placeholder = 'Seleccionar...',
+  items = [],                 // [{value,label}]
+  initialSelected = [],
+  onApply = () => {}
+} = {}){
+  const mount = document.getElementById(mountId);
+  if (!mount) return null;
+
+  const state = {
+    items: [...items],
+    selected: new Set(initialSelected),
+    pending: new Set(initialSelected),
+    open: false,
+    query: ''
+  };
+
+  const itemLabelByValue = () => {
+    const map = new Map();
+    state.items.forEach(it => map.set(it.value, it.label ?? it.value));
+    return map;
+  };
+
+  mount.classList.add('ms-wrap');
+  mount.innerHTML = `
+    <div class="ms-input" tabindex="0" role="button" aria-label="multiselect">
+      <span class="ms-placeholder">${escapeHtml(placeholder)}</span>
+      <span class="ms-caret bi bi-chevron-down"></span>
+    </div>
+    <div class="ms-panel">
+      <div class="ms-search">
+        <input type="text" class="form-control form-control-sm" placeholder="Buscar...">
+      </div>
+      <div class="ms-list"></div>
+      <div class="ms-actions">
+        <button type="button" class="btn btn-outline-secondary btn-sm ms-cancel">Cancel</button>
+        <button type="button" class="btn btn-az btn-sm ms-ok">OK</button>
+      </div>
+    </div>
+  `;
+
+  const inputEl = mount.querySelector('.ms-input');
+  const panelEl = mount.querySelector('.ms-panel');
+  const searchEl = mount.querySelector('.ms-search input');
+  const listEl = mount.querySelector('.ms-list');
+  const btnCancel = mount.querySelector('.ms-cancel');
+  const btnOk = mount.querySelector('.ms-ok');
+
+  function renderChips(){
+    inputEl.querySelectorAll('.ms-chip').forEach(x => x.remove());
+    const ph = inputEl.querySelector('.ms-placeholder');
+    const arr = [...state.selected];
+    const labels = itemLabelByValue();
+
+    if (arr.length === 0){
+      ph.style.display = '';
+      ph.textContent = placeholder;
+      return;
+    }
+    ph.style.display = 'none';
+
+    arr.slice(0, 2).forEach(v => {
+      const chip = document.createElement('span');
+      chip.className = 'ms-chip';
+      const textLabel = labels.get(v) ?? v;
+
+      chip.innerHTML = `${escapeHtml(textLabel)} <button type="button" aria-label="remove">&times;</button>`;
+      chip.querySelector('button').onclick = (e) => {
+        e.stopPropagation();
+        state.selected.delete(v);
+        state.pending = new Set(state.selected);
+        renderChips();
+        renderList();
+        onApply([...state.selected]);
+      };
+      inputEl.insertBefore(chip, inputEl.querySelector('.ms-caret'));
+    });
+
+    if (arr.length > 2){
+      const more = document.createElement('span');
+      more.className = 'ms-chip';
+      more.textContent = `+${arr.length - 2}`;
+      inputEl.insertBefore(more, inputEl.querySelector('.ms-caret'));
+    }
+  }
+
+  function renderList(){
+    const q = (state.query || '').trim().toUpperCase();
+    const filtered = state.items.filter(it => {
+      const t = `${it.label ?? ''} ${it.value ?? ''}`.toUpperCase();
+      return t.includes(q);
+    });
+
+    listEl.innerHTML = '';
+    if (!filtered.length){
+      listEl.innerHTML = `<div class="text-muted small px-2 py-2">Sin resultados</div>`;
+      return;
+    }
+
+    filtered.forEach(it => {
+      const row = document.createElement('label');
+      row.className = 'ms-item';
+      const checked = state.pending.has(it.value) ? 'checked' : '';
+      row.innerHTML = `
+        <input class="form-check-input" type="checkbox" ${checked}>
+        <span>${escapeHtml(it.label ?? it.value)}</span>
+      `;
+      row.querySelector('input').addEventListener('change', (e) => {
+        if (e.target.checked) state.pending.add(it.value);
+        else state.pending.delete(it.value);
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function open(){
+    state.open = true;
+    state.pending = new Set(state.selected);
+    panelEl.classList.add('open');
+    state.query = '';
+    searchEl.value = '';
+    renderList();
+    setTimeout(()=>searchEl.focus(), 0);
+  }
+
+  function close(){
+    state.open = false;
+    panelEl.classList.remove('open');
+  }
+
+  inputEl.addEventListener('click', () => state.open ? close() : open());
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); state.open ? close() : open(); }
+    if (e.key === 'Escape') close();
+  });
+
+  searchEl.addEventListener('input', () => {
+    state.query = searchEl.value || '';
+    renderList();
+  });
+
+  btnCancel.addEventListener('click', () => close());
+
+  btnOk.addEventListener('click', () => {
+    state.selected = new Set(state.pending);
+    renderChips();
+    close();
+    onApply([...state.selected]);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!mount.contains(e.target) && state.open) close();
+  });
+
+  function setItems(newItems){
+    state.items = [...(newItems || [])];
+    const valid = new Set(state.items.map(x=>x.value));
+    state.selected = new Set([...state.selected].filter(v => valid.has(v)));
+    state.pending = new Set(state.selected);
+    renderChips();
+    if (state.open) renderList();
+  }
+
+  function getSelected(){ return [...state.selected]; }
+  function setSelected(arr){
+    state.selected = new Set(arr || []);
+    state.pending = new Set(state.selected);
+    renderChips();
+    if (state.open) renderList();
+  }
+
+  renderChips();
+  return { setItems, getSelected, setSelected };
+}
+
+/* ======= Vars & helpers básicos ======= */
+const GROUP = { enabled:false };
+const REMOVED_COL_IDS = new Set(['cadenaCurva','precioTotalSugerido','precioTotalVenta','precioTotalVentaIgv']);
+const isRemoved = (id) => REMOVED_COL_IDS.has(id);
+
+const money = (val) => { const n = parseFloat(String(val ?? '').replace(',', '.')); return Number.isFinite(n) ? n.toFixed(2) : '0.00'; };
+const int0  = (val) => { const n = parseInt(val, 10); return Number.isFinite(n) ? n : 0; };
+const text  = (val) => (val ?? '');
+
+function firstFieldValue(row, field){
+  if (typeof field === 'function') { try { return field(row); } catch { return null; } }
+  if (Array.isArray(field)){ for (const k of field){ if (row[k] != null) return row[k]; } return null; }
+  return row[field];
+}
+function formattedValue(row, col){
+  const v = firstFieldValue(row, col.field);
+  if (col.type === 'image') return '';
+  if (col.type === 'money') return money(v);
+  if (col.type === 'int')   return int0(v);
+  return text(v);
+}
+function canonicalValue(row, col){
+  const v = firstFieldValue(row, col.field);
+  if (col.type === 'money' || col.type === 'int') {
+    const n = parseFloat(String(v ?? '').replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  }
+  return (v ?? '').toString().trim().toUpperCase();
+}
+
+/* =========================================================
+   ✅ FIX: getters globales (usados en cargarDatos y exportarExcel)
+   ========================================================= */
+const getFab = (r) => r.nomFabricante ?? r.NomFabricante ?? r.Nomfabricante ?? r.nomfabricante ?? r.fabricante;
+const getCol = (r) => r.desColeccion ?? r.coleccion ?? r.nomColeccion ?? r.NomColeccion ?? r.descripcionColeccion;
+const getMar = (r) => r.marca ?? r.Marca;
+const getVen = (r) => r.codvendedor ?? r.vendedor ?? r.codVendedor ?? r.CodVendedor;
+
+/* ======= Columnas ======= */
+function mapPrePedidoData(data) {
+  return data.map(item => {
+    const tallasObj = item.tallas || {};
+    const orden = Object.keys(tallasObj).map(n => Number(n)).filter(n => !Number.isNaN(n)).sort((a,b) => a - b);
+    const cadenaCurva = orden.map(t => `${t}:${tallasObj[t]}`).join(' | ');
+    return { ...item, cadenaCurva };
+  });
+}
+function buildTallaCols(data) {
+  const tallasSet = new Set();
+  data.forEach(item => { Object.keys(item.tallas || {}).forEach(t => { const n = Number(t); if (!Number.isNaN(n)) tallasSet.add(n); }); });
+  return Array.from(tallasSet).sort((a,b)=>a-b).map(talla => ({
+    id:`talla_${talla}`, label:String(talla), field:row => (row.tallas?.[String(talla)] ?? 0),
+    type:'int', align:'center', visible:true
+  }));
+}
+function rebuildColsForData(savedCols, defaultCols, data) {
+  const _saved    = Array.isArray(savedCols) ? savedCols.filter(c => c && !isRemoved(c.id)) : null;
+  const _defaults = defaultCols.filter(c => !isRemoved(c.id));
+  const tallaCols = buildTallaCols(data);
+  const tallaMap  = new Map(tallaCols.map(c => [c.id, c]));
+  let base = [];
+  if (Array.isArray(_saved) && _saved.length) {
+    for (const sc of _saved) {
+      if (String(sc.id).startsWith('talla_')) {
+        if (tallaMap.has(sc.id)) { base.push({ ...tallaMap.get(sc.id), visible: sc.visible ?? true }); tallaMap.delete(sc.id); }
+      } else {
+        const original = _defaults.find(dc => dc.id === sc.id) || sc;
+        base.push({ ...original, ...sc });
+      }
+    }
+    const existingIds = new Set(base.map(c => c.id));
+    const extras = _defaults.filter(c => !existingIds.has(c.id));
+    base = [...base, ...extras];
+  } else {
+    base = JSON.parse(JSON.stringify(_defaults));
+  }
+  for (const [, col] of tallaMap.entries()) base.push(col);
+  return base;
+}
+
+const DEFAULT_COLS = [
+  { id:'fechaRegistro',  label:'Fecha',           field:['fechaRegistro','fchRegistro','fecha'], type:'date',  align:'start',  visible:true },
+  { id:'nroPrepedido',   label:'N° Pre-Pedido',   field:['nroPrepedido','nroPrePedido','nro_prepedido','nroPedido','nroPre'], type:'text', align:'start', visible:true },
+ // { id:'nroDocumento',   label:'NroDocumento',    field:['nroDocumento','ruc','documento'],    type:'text',  align:'start',  visible:true },
+  { id:'NomCliente',     label:'Nombre Cliente',  field:['NomCliente','nomCliente'],    type:'text',  align:'start',  visible:true },
+  
+  { id:'codvendedor',    label:'Vendedor',        field:['codvendedor','vendedor','codVendedor','CodVendedor'], type:'text',  align:'start',  visible:true },
+  { id:'canal',          label:'Canal',           field:['canal'],                               type:'text',  align:'start',  visible:true },
+
+  { id:'codFabricante',  label:'CodFabricante',   field:['codFabricante','codfabricante'],       type:'text',  align:'start',  visible:false },
+  { id:'nomFabricante',  label:'NomFabricante',   field:['nomFabricante','nomfabricante','Nomfabricante'],       type:'text',  align:'start',  visible:true },
+
+  { id:'codColeccion',   label:'Cod. Colección',  field:['codColeccion','codigo','cod_col'],     type:'text',  align:'center', visible:false },
+  { id:'desColeccion',   label:'Colección',       field:['desColeccion','coleccion','nomColeccion','NomColeccion','descripcionColeccion'], type:'text', align:'start', visible:true },
+
+  { id:'codLinea',       label:'Cod. Línea',      field:['codLinea'],                            type:'text',  align:'center', visible:false },
+  { id:'nomLinea',       label:'Línea',           field:['nomLinea','linea'],                    type:'text',  align:'start',  visible:false },
+
+  { id:'codReferenciaLinea', label:'Cod. Ref.',   field:['codReferenciaLinea','codRef','cod_referencia'], type:'text', align:'center', visible:false },
+  { id:'modelo',         label:'Modelo',          field:['modelo','nomReferenciaLinea','nom_ref','referencia'], type:'text', align:'start', visible:true },
+
+  { id:'codColor',       label:'Cod. Color',      field:['codColor'], type:'text', align:'center', visible:false },
+  { id:'color',          label:'Color',           field:['color','nomColor'], type:'text', align:'start', visible:true },
+  { id:'curva',          label:'Curva',           field:['curva','codCurva'], type:'text', align:'start', visible:false },
+
+  { id:'imagen',         label:'Imagen',          field:['imagen','img','imageUrl','RutaImagen'], type:'image', align:'center', visible:false },
+
+  { id:'totalCajas',     label:'T. Cajas',        field:['totalCajas','cajas'], type:'int', align:'center', visible:true },
+  { id:'totalPares',     label:'T. Pares',        field:['totalPares','pares'], type:'int', align:'center', visible:true },
+
+  { id:'precioSugerido', label:'Precio Sugerido', field:['precioSugerido','pSugerido'], type:'money', align:'end', visible:true },
+  { id:'precioMayorista',label:'Precio Mayorista',field:['precioParametro','precioMayorista'], type:'money', align:'end', visible:true },
+
+  { id:'clase',         label:'Clase',         field:['clase','Clase'],         type:'text', align:'start', visible:false },
+  { id:'marca',         label:'Marca',         field:['marca','Marca'],         type:'text', align:'start', visible:true  },
+  { id:'material',      label:'Material',      field:['material','Material'],   type:'text', align:'start', visible:false },
+  { id:'categoria',     label:'Categoría',     field:['categoria','Categoria'], type:'text', align:'start', visible:false },
+  { id:'subCategoria',  label:'SubCategoría',  field:['subCategoria','subcategoria','SubCategoria'], type:'text', align:'start', visible:false },
+
+  { id:'anexo',         label:'Anexo',         field:['anexo','codAnexo','CodAnexo'], type:'text', align:'start', visible:false },
+];
+
+const STORAGE_KEY = 'resumenColsV1';
+function loadCols(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    if (Array.isArray(saved) && saved.length){
+      const cleanSaved = saved.filter(c => c && !isRemoved(c.id));
+      const savedIds   = new Set(cleanSaved.map(c=>c.id));
+      const extras     = DEFAULT_COLS.filter(c => !savedIds.has(c.id) && !isRemoved(c.id));
+      return [...cleanSaved, ...extras];
+    }
+  }catch(e){}
+  return DEFAULT_COLS.filter(c => !isRemoved(c.id)).map(c=>({...c}));
+}
+function saveCols(cols){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cols)); }
+let COLS = loadCols();
+
+/* ======= MultiSelects (estado) ======= */
+let msColeccion, msFabricante, msMarca, msVendedor;
+let selectedColeccion = [];
+let selectedFabricante = [];
+let selectedMarca = [];
+let selectedVendedor = [];
+
+/* ======= Eventos UI ======= */
+document.getElementById('btnBuscar').addEventListener('click', cargarDatos);
+document.getElementById('btnExcel').addEventListener('click', exportarExcel);
+document.getElementById('btnColumnas').addEventListener('click', openColumnManager);
+document.getElementById('chkGroup').addEventListener('change', e=>{ GROUP.enabled = e.target.checked; renderTable(lastData); });
+
+let columnModal;
+window.addEventListener('DOMContentLoaded', () => {
+  const fIni = document.getElementById('fIni');
+  const fFin = document.getElementById('fFin');
+
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+  const fechaInicio = `${yyyy}-${mm}-01`;
+  const ultimoDia = new Date(yyyy, hoy.getMonth() + 1, 0).getDate();
+  const fechaFin = `${yyyy}-${mm}-${String(ultimoDia).padStart(2, '0')}`;
+
+  fIni.value = fechaInicio;
+  fFin.value = fechaFin;
+
+  // MultiSelects (vacíos, se llenan con data)
+  msVendedor = createMultiSelect('msVendedor', {
+    placeholder:'Vendedor...',
+    items: [],
+    onApply: (arr) => { selectedVendedor = arr; cargarDatos(); }
+  });
+
+  msColeccion  = createMultiSelect('msColeccion', {
+    placeholder:'Colección...',
+    items: [],
+    onApply: (arr) => { selectedColeccion = arr; cargarDatos(); }
+  });
+
+  msFabricante = createMultiSelect('msFabricante', {
+    placeholder:'Fabricante...',
+    items: [],
+    onApply: (arr) => { selectedFabricante = arr; cargarDatos(); }
+  });
+
+  msMarca      = createMultiSelect('msMarca', {
+    placeholder:'Marca...',
+    items: [],
+    onApply: (arr) => { selectedMarca = arr; cargarDatos(); }
+  });
+
+  // ✅ FIX: eliminamos txtVendedor (no existe)
+  ['fIni','fFin'].forEach(id=>{
+    const el = document.getElementById(id);
+    el && el.addEventListener('keydown', e => { if (e.key === 'Enter') cargarDatos(); });
+  });
+
+  columnModal = new bootstrap.Modal(document.getElementById('columnModal'));
+  cargarDatos();
+  fixBarSpace();
+});
+
+/* ======= API ======= */
+const API_URL = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/GetResumenPrePedidoPorDiaAsync';
+//const API_URL = 'http://localhost:5232/api/ProcesoPrePedido/GetResumenPrePedidoPorDiaAsync';
+
+async function fetchResumen(payload){
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return resp.json();
+}
+
+/* ======= Carga de datos ======= */
+let lastData = [];
+let areaVendedor = "";
+let lastPayload = null;
+
+function formatearFechaParaAPI(fechaISO) {
+  const [yyyy, mm, dd] = fechaISO.split('-');
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function normKey(s){
+  return String(s ?? '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
+    .replace(/\s+/g, ' ')                            // colapsa espacios
+    .trim()
+    .toUpperCase();
+}
+
+function uniqSorted(arr){
+  return Array.from(new Set((arr||[]).map(x => String(x ?? '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+}
+
+async function cargarDatos(){
+  const fIniInput = document.getElementById('fIni');
+  const fFinInput = document.getElementById('fFin');
+  const tbody = document.getElementById('tbodyResumen');
+  const area = localStorage.getItem('area') || '';
+
+  tbody.innerHTML = '<tr><td class="text-center py-3" colspan="999">Cargando…</td></tr>';
+
+  if (fIniInput.value > fFinInput.value) {
+    tbody.innerHTML = '<tr><td colspan="999" class="text-danger text-center py-3">La fecha inicio debe ser anterior a la fecha fin</td></tr>';
+    return;
+  }
+
+  areaVendedor = area;
+  const fechaInicio = formatearFechaParaAPI(fIniInput.value);
+  const fechaFin = formatearFechaParaAPI(fFinInput.value);
+
+  const payload = { fechaInicio, fechaFin, areaVendedor };
+
+  if (selectedMarca.length) payload.Marca = selectedMarca.join('-');
+  if (selectedFabricante.length) payload.Fabricante = selectedFabricante.join('-');
+  if (selectedColeccion.length) payload.Coleccion = selectedColeccion.join('-');
+  if (selectedVendedor.length) payload.CodVendedor = selectedVendedor.join('-');
+  lastPayload = payload;
+
+  try{
+    const data = await fetchResumen(payload);
+    const rows = mapPrePedidoData(Array.isArray(data) ? data : []);
+
+    // Poblar opciones de multiselects (desde la data)
+    const colecciones = uniqSorted(rows.map(getCol));
+    const fabricantes = uniqSorted(rows.map(getFab));
+    const marcas      = uniqSorted(rows.map(getMar));
+    const vendedores  = uniqSorted(rows.map(getVen));
+
+    msColeccion?.setItems(colecciones.map(x => ({ value:x, label:x })));
+    msFabricante?.setItems(fabricantes.map(x => ({ value:x, label:x })));
+    msMarca?.setItems(marcas.map(x => ({ value:x, label:x })));
+    msVendedor?.setItems(vendedores.map(x => ({ value:x, label:x })));
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    COLS = rebuildColsForData(saved, DEFAULT_COLS, rows);
+
+    // Filtro local (client-side)
+    const setEq = (selectedArr, value) => {
+      if (!selectedArr.length) return true;
+      const v = normKey(value);
+      return selectedArr.some(x => normKey(x) === v);
+    };
+
+    lastData = rows.filter(r => {
+      const ven = getVen(r);
+      const mar = getMar(r);
+      const fab = getFab(r);
+      const col = getCol(r);
+
+      const okVen   = setEq(selectedVendedor, ven);
+      const okMarca = setEq(selectedMarca, mar);
+      const okFab   = setEq(selectedFabricante, fab);
+      const okCol   = setEq(selectedColeccion, col);
+
+      return okVen && okMarca && okFab && okCol;
+    });
+
+    renderTable(lastData);
+    fixBarSpace();
+  }catch(e){
+    console.error(e);
+    tbody.innerHTML = '<tr><td colspan="999" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
+  }
+}
+
+/* ======= Render tabla ======= */
+function getVisibleCols(){ return COLS.filter(c=>c.visible); }
+
+function sortForGrouping(data, vcols){
+  const arr = [...data];
+  arr.sort((a, b)=>{
+    for (const c of vcols){
+      const va = canonicalValue(a, c);
+      const vb = canonicalValue(b, c);
+      if (va == null && vb == null) continue;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (va < vb) return -1;
+      if (va > vb) return 1;
+    }
+    return 0;
+  });
+  return arr;
+}
+function buildRowSpanMatrix(rows, vcols){
+  const n = rows.length, m = vcols.length;
+  const span = Array.from({length:n}, ()=>Array(m).fill(1));
+  for (let j=0; j<m; j++){
+    let start = 0;
+    for (let i=1; i<=n; i++){
+      const prevVal = canonicalValue(rows[i-1], vcols[j]);
+      const currVal = (i<n) ? canonicalValue(rows[i], vcols[j]) : Symbol('end');
+      if (prevVal !== currVal){
+        const rs = i - start;
+        span[start][j] = rs;
+        for (let k=start+1; k<i; k++) span[k][j] = 0;
+        start = i;
+      }
+    }
+  }
+  return span;
+}
+
+function renderTable(data){
+  const theadRow = document.getElementById('theadRow');
+  const tbody = document.getElementById('tbodyResumen');
+  const vcols = getVisibleCols();
+
+  theadRow.innerHTML = '';
+  vcols.forEach(c=>{
+    const th = document.createElement('th');
+    th.textContent = c.label;
+    th.className = (c.align === 'end' ? 'text-end' : (c.align === 'center' ? 'text-center' : ''));
+    theadRow.appendChild(th);
+  });
+
+  tbody.innerHTML = '';
+  if(!Array.isArray(data) || data.length === 0){
+    tbody.innerHTML = '<tr><td colspan="999" class="text-center py-3">Sin datos</td></tr>';
+    return;
+  }
+
+  let rows = data;
+  let rowSpanMatrix = null;
+
+  if (GROUP.enabled){
+    rows = sortForGrouping(rows, vcols);
+    rowSpanMatrix = buildRowSpanMatrix(rows, vcols);
+  }
+
+  const frag = document.createDocumentFragment();
+
+  for (let i=0; i<rows.length; i++){
+    const r = rows[i];
+    const tr = document.createElement('tr');
+
+    for (let j=0; j<vcols.length; j++){
+      const c = vcols[j];
+      const alignClass = (c.align === 'end' ? 'text-end' : (c.align === 'center' ? 'text-center' : ''));
+
+      if (c.type === 'image'){
+        let rs = 1;
+        if (GROUP.enabled){
+          const cellSpan = rowSpanMatrix[i][j];
+          if (cellSpan === 0) continue;
+          rs = cellSpan;
+        }
+        const td = document.createElement('td');
+        td.className = alignClass;
+        if (GROUP.enabled && rs > 1){ td.rowSpan = rs; td.classList.add('grouped-first'); }
+        const urlImg = firstFieldValue(r, c.field);
+        if (urlImg){
+          const img = document.createElement('img');
+          img.src = urlImg;
+          img.alt = '';
+          img.style.maxHeight = '40px';
+          img.referrerPolicy = 'no-referrer';
+          td.appendChild(img);
+        }
+        tr.appendChild(td);
+        continue;
+      }
+
+      if (GROUP.enabled){
+        const rs = rowSpanMatrix[i][j];
+        if (rs === 0) continue;
+        const td = document.createElement('td');
+        td.textContent = formattedValue(r, c);
+        if (rs > 1){ td.rowSpan = rs; td.classList.add('grouped-first'); }
+        td.className = alignClass;
+        tr.appendChild(td);
+      }else{
+        const td = document.createElement('td');
+        td.textContent = formattedValue(r, c);
+        td.className = alignClass;
+        tr.appendChild(td);
+      }
+    }
+    frag.appendChild(tr);
+  }
+
+  tbody.appendChild(frag);
+  appendTotalsRow(tbody, rows, vcols);
+}
+
+/* ======= Totales ======= */
+function calcTotals(rows, vcols){
+  const out = { totalPares: 0, totalCajas: 0, tallas: {} };
+  const tallaKeys = vcols.filter(c => String(c.id).startsWith('talla_')).map(c => c.id.split('_')[1]);
+  rows.forEach(r => {
+    let pares = Number(r.totalPares) || 0;
+    if (!pares && r.tallas && typeof r.tallas === 'object') {
+      pares = Object.values(r.tallas).reduce((s, n) => s + (parseInt(n,10)||0), 0);
+    }
+    out.totalPares += pares;
+    out.totalCajas += (parseInt(r.totalCajas,10) || 0);
+    tallaKeys.forEach(tk => { out.tallas[tk] = (out.tallas[tk] || 0) + (parseInt(r?.tallas?.[tk],10) || 0); });
+  });
+  return out;
+}
+function appendTotalsRow(tbody, rows, vcols){
+  if (!rows.length) return;
+  const totals = calcTotals(rows, vcols);
+  const tr = document.createElement('tr');
+  tr.className = 'table-warning fw-bold';
+
+  const firstTd = document.createElement('td');
+  firstTd.textContent = 'Totales';
+  tr.appendChild(firstTd);
+
+  for (let j = 1; j < vcols.length; j++){
+    const c = vcols[j];
+    const td = document.createElement('td');
+    const alignClass = (c.align === 'end' ? 'text-end' : (c.align === 'center' ? 'text-center' : ''));
+    if (alignClass) td.className = alignClass;
+
+    let val = '';
+    if (c.id === 'totalCajas') val = totals.totalCajas;
+    else if (c.id === 'totalPares') val = totals.totalPares;
+    else if (String(c.id).startsWith('talla_')) {
+      const key = c.id.split('_')[1];
+      val = totals.tallas[key] || 0;
+    }
+    td.textContent = val;
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+}
+
+/* ======= Gestor de columnas ======= */
+function openColumnManager(){
+  const list = document.getElementById('columnList');
+  list.innerHTML = '';
+  COLS.forEach(col=>{
+    const item = document.createElement('div');
+    item.className = 'drag-item';
+    item.draggable = true;
+    item.dataset.id = col.id;
+    item.innerHTML = `
+      <span class="drag-handle bi bi-grip-vertical"></span>
+      <div class="form-check">
+        <input class="form-check-input cm-check" type="checkbox" id="cm_${col.id}" ${col.visible ? 'checked':''}>
+        <label class="form-check-label" for="cm_${col.id}">${col.label}</label>
+      </div>
+      <span class="ms-auto small text-muted">${col.type === 'money' ? 'moneda' : col.type === 'int' ? 'entero' : (col.type === 'image' ? 'imagen' : 'texto')}</span>
+    `;
+    list.appendChild(item);
+  });
+
+  let dragged = null;
+  list.querySelectorAll('.drag-item').forEach(el=>{
+    el.addEventListener('dragstart', e=>{ dragged = el; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    el.addEventListener('dragend',   ()=>{ dragged?.classList.remove('dragging'); dragged = null; });
+  });
+  list.addEventListener('dragover', e=>{
+    e.preventDefault();
+    const afterElement = getDragAfterElement(list, e.clientY);
+    if(afterElement == null) list.appendChild(dragged);
+    else list.insertBefore(dragged, afterElement);
+  });
+  function getDragAfterElement(container, y){
+    const els = [...container.querySelectorAll('.drag-item:not(.dragging)')];
+    return els.reduce((closest, child)=>{
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset) return {offset, element: child};
+      else return closest;
+    }, {offset: Number.NEGATIVE_INFINITY}).element;
+  }
+
+  document.getElementById('cmShowAll').onclick = ()=>{ list.querySelectorAll('.cm-check').forEach(c=>c.checked=true); };
+  document.getElementById('cmHideAll').onclick = ()=>{ list.querySelectorAll('.cm-check').forEach(c=>c.checked=false); };
+  document.getElementById('cmReset').onclick   = ()=>{ COLS = JSON.parse(JSON.stringify(DEFAULT_COLS)); openColumnManager(); };
+
+  document.getElementById('cmApply').onclick = ()=>{
+    const items = [...list.querySelectorAll('.drag-item')];
+    const nextCols = items.map(it=>{
+      const id = it.dataset.id;
+      const base = COLS.find(c=>c.id===id) || DEFAULT_COLS.find(c=>c.id===id);
+      return {...base, visible: it.querySelector('.cm-check').checked};
+    });
+    COLS = nextCols;
+    saveCols(COLS);
+    renderTable(lastData);
+    fixBarSpace();
+  };
+
+  new bootstrap.Modal(document.getElementById('columnModal')).show();
+}
+
+/* ======= Excel ======= */
+async function exportarExcel() {
+  try {
+    if (!lastPayload) { alert("Primero realiza una búsqueda."); return; }
+
+    // ✅ FIX: ExcelJS debe existir
+    if (!window.ExcelJS) { throw new Error("ExcelJS no está cargado. Revisa el CDN."); }
+
+    const arrRaw = await fetchResumen(lastPayload);
+    const rowsAll = mapPrePedidoData(Array.isArray(arrRaw) ? arrRaw : []);
+
+    const norm = (s) => String(s ?? '').trim().toUpperCase();
+    const setEq = (selectedArr, value) => selectedArr.length ? selectedArr.some(x => norm(x) === norm(value)) : true;
+
+    const rows = rowsAll.filter(r => {
+      const ven = getVen(r);
+      const mar = getMar(r);
+      const fab = getFab(r);
+      const col = getCol(r);
+
+      const okVen   = setEq(selectedVendedor, ven);
+      const okMarca = setEq(selectedMarca, mar);
+      const okFab   = setEq(selectedFabricante, fab);
+      const okCol   = setEq(selectedColeccion, col);
+
+      return okVen && okMarca && okFab && okCol;
+    });
+
+    const vcols = COLS.filter(c=>c.visible);
+    if (vcols.length === 0) { alert("No hay columnas visibles para exportar."); return; }
+
+    let outRows = rows;
+    let rowSpanMatrix = null;
+    if (GROUP.enabled){
+      outRows = sortForGrouping(outRows, vcols);
+      rowSpanMatrix = buildRowSpanMatrix(outRows, vcols);
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Resumen Pre-Pedidos");
+
+    worksheet.addRow(vcols.map(c=>c.label));
+    const headerRow = worksheet.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD46321" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+    });
+
+    for (let i=0; i<outRows.length; i++){
+      const r = outRows[i];
+      const values = vcols.map((c, j)=>{
+        if (GROUP.enabled && rowSpanMatrix[i][j] === 0) return '';
+        if (c.type === 'money'){
+          const raw = firstFieldValue(r, c.field);
+          const n = parseFloat(String(raw ?? '').replace(',','.'));
+          return Number.isFinite(n) ? n : 0;
+        } else if (c.type === 'int'){
+          return int0(firstFieldValue(r, c.field));
+        } else if (c.type === 'image'){
+          return text(firstFieldValue(r, c.field));
+        } else {
+          return text(firstFieldValue(r, c.field));
+        }
+      });
+
+      const row = worksheet.addRow(values);
+      row.eachCell((cell, idx)=>{
+        const type = vcols[idx-1]?.type;
+        cell.alignment = { vertical:'middle', horizontal: (vcols[idx-1]?.align==='end'?'right':vcols[idx-1]?.align==='center'?'center':'left') };
+        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+        if (type==='money') cell.numFmt = '#,##0.00';
+      });
+    }
+
+    worksheet.columns.forEach((col) => {
+      let max = 10;
+      col.eachCell({includeEmpty:true}, cell => {
+        const len = String(cell.value ?? '').length;
+        if (len > max) max = len;
+      });
+      col.width = Math.min(max + 2, 45);
+    });
+    worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: vcols.length } };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "ResumenPrePedidos.xlsx";
+    link.click();
+  } catch (error) {
+    console.error("Error al exportar Excel:", error);
+    alert("Ocurrió un error al generar el archivo Excel: " + (error?.message || error));
+  }
+}
+
+/* ======= Espacio bajo barra ======= */
+function fixBarSpace(){
+  const fb = document.querySelector('.filter-bar');
+  const h = fb ? (fb.offsetHeight || 0) : 0;
+  document.documentElement.style.setProperty('--bar-h', h + 'px');
+}
+window.addEventListener('load',   fixBarSpace);
+window.addEventListener('resize', fixBarSpace);
+if (window.ResizeObserver){
+  const fb = document.querySelector('.filter-bar');
+  if (fb){
+    const ro = new ResizeObserver(fixBarSpace);
+    ro.observe(fb);
+  }
+}
+  </script>
+</body>
+</html>

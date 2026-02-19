@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Consolidado Producto Fabricación – Azaleia</title>
+
+  <!-- Bootstrap + Iconos -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <!-- ExcelJS + FileSaver (para exportar XLSX con imágenes embebidas) -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+  <style>
+    :root { --az:#e66b00; --az-dark:#cc5200; --az-soft:#fff7f2; }
+    body { background:var(--az-soft); font-family:'Segoe UI', system-ui, -apple-system, Arial, sans-serif; }
+    h2 { color:var(--az-dark); font-weight:700; }
+
+    .card-az{border:0;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.06)}
+    .card-az .card-header{
+      background:linear-gradient(90deg,var(--az),var(--az-dark));
+      color:#fff;border-top-left-radius:14px;border-top-right-radius:14px;
+      padding:.6rem .9rem;font-weight:700
+    }
+
+    /* Spinner */
+    #spinner{
+      position:fixed;inset:0;display:none;
+      align-items:center;justify-content:center;
+      background:rgba(255,255,255,.85);z-index:2000
+    }
+    #spinner .spinner-border{width:3rem;height:3rem;color:var(--az-dark)}
+
+    /* Filtros */
+    .filters-card {
+      border: 0;
+      border-radius: 14px;
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+      background: #fff;
+      margin-bottom: 1rem;
+    }
+    .filters-card .card-body { padding: .6rem .9rem; }
+    .filters-card .row > [class^="col"] { min-width: 0; }
+    @media (min-width: 992px){
+      .filters-row { display:flex; align-items:flex-end; flex-wrap:nowrap; gap:.6rem; }
+      .filters-row > .col-auto, .filters-row > .col { flex:0 0 auto; }
+      .filters-row > .col-grow { flex:1 1 auto; min-width:220px; }
+    }
+
+    /* Multiselect */
+    .ms { position: relative; width: 100%; min-width: 0; }
+    .ms-control {
+      display:flex; align-items:center; gap:.25rem;
+      border:1px solid #ced4da; border-radius:.5rem;
+      background:#fff; padding:.25rem .5rem; cursor:pointer;
+      min-height:calc(1.5rem + .6rem);
+      max-height:calc(1.5rem + .6rem);
+      overflow:hidden;
+    }
+    .ms-control:hover { border-color:#adb5bd; }
+    .ms-placeholder { color:#6c757d; white-space:nowrap; }
+    .ms-chips { display:flex; flex-wrap:nowrap; gap:.25rem; overflow:hidden; }
+    .ms-chip {
+      background:#fff3e6; color:#b24d00;
+      border:1px solid #ffd9b3; border-radius:999px;
+      padding:0 .5rem; font-size:.78rem;
+      max-width:160px; white-space:nowrap;
+      text-overflow:ellipsis; overflow:hidden;
+    }
+    .ms-caret { margin-left:auto; color:#666; }
+    .ms-panel {
+      position:absolute; z-index:1050; top:100%; left:0; right:0;
+      background:#fff; border:1px solid #dee2e6; border-radius:.5rem;
+      margin-top:.25rem; box-shadow:0 10px 26px rgba(0,0,0,.10);
+    }
+    .ms-head { display:flex; align-items:center; gap:.5rem; padding:.5rem; border-bottom:1px solid #eee; }
+    .ms-head input { width:100%; }
+    .ms-list { max-height:260px; overflow:auto; padding:.25rem .5rem; }
+    .ms-row { display:flex; align-items:center; gap:.5rem; padding:.3rem .25rem; border-radius:.35rem; }
+    .ms-row:hover { background:#f8f9fa; }
+    .ms-footer { display:flex; justify-content:flex-end; gap:.5rem; padding:.5rem; border-top:1px solid #eee; }
+    .ms-btn { border:1px solid #ced4da; background:#fff; border-radius:.45rem; padding:.25rem .7rem; }
+    .ms-btn.primary { background:#e66b00; border-color:#e66b00; color:#fff; }
+    .ms-small { font-size:.76rem; color:#6c757d; margin-top:.15rem; white-space:nowrap; }
+
+    /* KPI total pares global */
+    .total-card{
+      border:0;border-radius:14px;
+      box-shadow:0 8px 22px rgba(0,0,0,.06);
+      background:#fff;
+      padding:.75rem .9rem;
+      display:flex;align-items:center;justify-content:space-between;
+      gap:.75rem;
+      margin-bottom:1rem;
+    }
+    .total-card .title{color:#666;font-size:.9rem;margin:0}
+    .total-card .value{margin:0;font-weight:900;font-size:1.3rem;color:#111}
+    .badge-az{background:var(--az);}
+
+    /* Tabla estilo grid + scroll real */
+    .table-shell{ padding:0; border-top:1px solid rgba(0,0,0,.06); }
+    .grid-scroll{
+      height: 62vh;
+      overflow: auto;
+      background:#fff;
+      border-bottom-left-radius:14px;
+      border-bottom-right-radius:14px;
+    }
+
+    table.grid{
+      margin:0;
+      border-collapse:collapse;
+      min-width:1700px;
+      font-size:.86rem;
+      background:#fff;
+    }
+    table.grid thead th{
+      position:sticky;
+      top:0;
+      z-index:3;
+      background:#f2f2f2;
+      color:#222;
+      font-weight:800;
+      border:1px solid #d9d9d9;
+      padding:.45rem .55rem;
+      white-space:nowrap;
+    }
+    table.grid tbody td{
+      border:1px solid #e0e0e0;
+      padding:.4rem .55rem;
+      white-space:nowrap;
+      vertical-align:middle;
+      font-variant-numeric: tabular-nums;
+    }
+    table.grid tbody tr:hover td{ background:#fffaf5; }
+
+    .td-num{ text-align:right; }
+    .td-url{
+      max-width:260px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Imagen NO sticky */
+    .img-col{ width:56px; min-width:56px; }
+    .img-thumb{
+      width:44px;height:44px;border-radius:8px;object-fit:cover;
+      border:1px solid rgba(0,0,0,.12); background:#fff;
+      display:block;
+    }
+
+    th.vend-col, td.vend-col{ min-width:90px; width:90px; }
+
+    tr.total-row td{
+      background:#f7f7f7;
+      font-weight:900;
+    }
+
+    .btn-az{
+      background:var(--az);
+      color:#fff;
+      border:0;
+    }
+    .btn-az:hover{ background:var(--az-dark); color:#fff; }
+  </style>
+</head>
+
+<body class="container-fluid py-3">
+
+  <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+    <h2 class="mb-2">
+      <i class="bi bi-ui-checks-grid me-2"></i>Consolidado Producto Fabricación
+    </h2>
+
+  </div>
+
+  <!-- Total global -->
+  <div class="total-card" id="cardTotalGlobal">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge badge-az text-white"><i class="bi bi-box-seam"></i></span>
+      <p class="title mb-0">Total pares (global)</p>
+    </div>
+    <p class="value mb-0" id="totalGlobalPares">0</p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card filters-card">
+    <div class="card-body">
+      <div class="row g-2 filters-row">
+
+        <div class="col-grow">
+          <label class="form-label mb-1 small">Colección</label>
+          <div id="ms-CodColeccion" class="ms"></div>
+          <div class="ms-small" id="colecSummary">Sin filtro</div>
+        </div>
+
+        <div class="col-grow">
+          <label class="form-label mb-1 small">Fabricante</label>
+          <div id="ms-CodFabricante" class="ms"></div>
+          <div class="ms-small" id="fabSummary">Sin filtro</div>
+        </div>
+
+        <div class="col-grow">
+          <label class="form-label mb-1 small">Marca</label>
+          <div id="ms-CodMarca" class="ms"></div>
+          <div class="ms-small" id="marcSummary">Sin filtro</div>
+        </div>
+
+        <div class="col-grow">
+          <label class="form-label mb-1 small">Modelo (texto)</label>
+          <input id="txtModelo" class="form-control form-control-sm" placeholder="Ej: KIARA, EMMA, 908...">
+          <div class="ms-small text-muted">Busca por Modelo</div>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label mb-1 small d-block">&nbsp;</label>
+          <button id="btnBuscar" class="btn btn-sm btn-az px-3">
+            <i class="bi bi-search me-1"></i>Buscar
+          </button>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label mb-1 small d-block">&nbsp;</label>
+          <button id="btnExportar" class="btn btn-sm btn-az px-3">
+            <i class="bi bi-plus-lg"></i></i>Exportar
+          </button>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label mb-1 small d-block">&nbsp;</label>
+          <button id="btnLimpiar" class="btn btn-sm btn-outline-secondary px-3">
+            <i class="bi bi-eraser me-1"></i>Limpiar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card card-az" id="cardConsolidado">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <span>Resultado</span>
+          <small class="opacity-75" id="lblFilas">0 filas</small>
+        </div>
+
+        <div class="card-body table-shell">
+          <div class="grid-scroll" id="gridScroll">
+            <table class="grid" id="tblGrid">
+              <thead>
+                <tr id="trHeadConsolidado">
+                  <th class="img-col">IMG</th>
+
+                  <th>CodColeccion</th>
+                  <th>NomColeccion</th>
+                  <th>CodLinea</th>
+                  <th>NomLinea</th>
+                  <th>CodReferenciaLinea</th>
+                  <th>NomReferenciaLinea</th>
+                  <th>CodColor</th>
+                  <th>NomColor</th>
+                  <th>Marca</th>
+                  <th>Clase</th>
+                 
+                  <th>NomFabricante</th>
+
+                  <!-- vendedores dinámicos -->
+
+                  <th class="td-num" id="thTotal">TOTAL_PARES</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyConsolidado"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Spinner -->
+  <div id="spinner"><div class="spinner-border" role="status"></div></div>
+
+  <script>
+    let tempExportRows = [];
+
+    // =================== CONFIG ===================
+    const URL_API = "https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/GetConsolidadoProductoFabricacionAsync";
+    const URL_EXPORT = "https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/ExportConsolidadoProductoFabricacionExcel";
+//  const URL_EXPORT = "http://localhost:5232/api/ProcesoPrePedido/ExportConsolidadoProductoFabricacionExcel";
+   // const URL_API = "http://localhost:5232/api/ProcesoPrePedido/GetConsolidadoProductoFabricacionAsync";
+    const $ = id => document.getElementById(id);
+
+    function showSpinner(){ $('spinner').style.display='flex'; }
+    function hideSpinner(){ $('spinner').style.display='none'; }
+
+    // enteros + separador de miles
+    function toInt(n){
+      const x = Number(n);
+      if (!Number.isFinite(x)) return 0;
+      return Math.trunc(x);
+    }
+    function fmtInt(n){
+      return toInt(n).toLocaleString('es-PE', { maximumFractionDigits: 0 });
+    }
+
+    function normText(s){
+      return (s ?? '')
+        .toString()
+        .normalize('NFD').replace(/\p{Diacritic}/gu,'')
+        .toLowerCase()
+        .trim();
+    }
+    function getField(r, a, b){
+      return (r && (r[a] ?? r[b])) ?? '';
+    }
+    function esc(s){
+      return (s ?? '').toString()
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    // =================== MultiSelect ===================
+    class MultiSelect {
+      constructor(root, { placeholder = 'Selecciona...', options = [], searchable = true, summaryId = null } = {}) {
+        this.root = root;
+        this.placeholder = placeholder;
+        this.allOptions = options;
+        this.filtered = [...options];
+        this.tempSelected = new Set();
+        this.selected = new Set();
+        this.summaryId = summaryId;
+        this.build(searchable);
+        this.summaryEl = summaryId ? document.getElementById(summaryId) : null;
+        this.renderControl();
+        this.renderList();
+        this.syncSummary();
+        this.bindGlobalClose();
+      }
+      build(searchable) {
+        this.root.innerHTML = `
+          <div class="ms-control">
+            <div class="ms-chips"></div>
+            <div class="ms-placeholder">${this.placeholder}</div>
+            <i class="bi bi-caret-down-fill ms-caret"></i>
+          </div>
+          <div class="ms-panel" hidden>
+            <div class="ms-head">
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="ms-all"></div>
+              <input type="text" class="form-control form-control-sm" id="ms-search" placeholder="Buscar...">
+            </div>
+            <div class="ms-list"></div>
+            <div class="ms-footer">
+              <button type="button" class="ms-btn" id="ms-cancel">Cancel</button>
+              <button type="button" class="ms-btn primary" id="ms-ok">OK</button>
+            </div>
+          </div>`;
+        this.elControl  = this.root.querySelector('.ms-control');
+        this.elChips    = this.root.querySelector('.ms-chips');
+        this.elPh       = this.root.querySelector('.ms-placeholder');
+        this.elPanel    = this.root.querySelector('.ms-panel');
+        this.elList     = this.root.querySelector('.ms-list');
+        this.elSearch   = this.root.querySelector('#ms-search');
+        this.elAll      = this.root.querySelector('#ms-all');
+        this.btnOK      = this.root.querySelector('#ms-ok');
+        this.btnCancel  = this.root.querySelector('#ms-cancel');
+
+        this.elControl.addEventListener('click', () => this.open());
+        this.btnCancel.addEventListener('click', () => this.cancel());
+        this.btnOK.addEventListener('click', () => this.apply());
+        this.elAll.addEventListener('change', () => this.toggleAll(this.elAll.checked));
+        if (!searchable) this.elSearch.parentElement.style.display = 'none';
+        this.elSearch.addEventListener('input', () => this.filter(this.elSearch.value));
+      }
+      open(){
+        this.tempSelected = new Set(this.selected);
+        this.elPanel.hidden = false;
+        this.elSearch.focus();
+        this.renderList();
+        this.updateAllCheckbox();
+      }
+      close(){ this.elPanel.hidden = true; }
+      cancel(){ this.close(); }
+      apply(){
+        this.selected = new Set(this.tempSelected);
+        this.close();
+        this.renderControl();
+        this.syncSummary();
+        this.root.dispatchEvent(new CustomEvent('change',{detail:this.getValues()}));
+      }
+      filter(q){
+        const s = (q||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+        this.filtered = this.allOptions.filter(o=>{
+          const t = (o.label||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+          return !s || t.includes(s);
+        });
+        this.renderList();
+        this.updateAllCheckbox();
+      }
+      toggleAll(on){
+        this.filtered.forEach(o => on ? this.tempSelected.add(o.value) : this.tempSelected.delete(o.value));
+        this.renderList();
+      }
+      updateAllCheckbox(){
+        const vals = this.filtered.map(o=>o.value);
+        const allOn = vals.length>0 && vals.every(v=>this.tempSelected.has(v));
+        this.elAll.indeterminate = !allOn && vals.some(v=>this.tempSelected.has(v));
+        this.elAll.checked = allOn;
+      }
+      renderList(){
+        this.elList.innerHTML = '';
+        this.filtered.forEach(o=>{
+          const row = document.createElement('div');
+          row.className = 'ms-row';
+          row.innerHTML = `
+            <input type="checkbox" class="form-check-input"
+                   ${this.tempSelected.has(o.value)?'checked':''}
+                   data-v="${o.value}"><span>${o.label}</span>`;
+          row.querySelector('input').addEventListener('change',(e)=>{
+            const v = e.target.dataset.v;
+            if (e.target.checked) this.tempSelected.add(v);
+            else this.tempSelected.delete(v);
+            this.updateAllCheckbox();
+          });
+          this.elList.appendChild(row);
+        });
+      }
+      renderControl(){
+        this.elChips.innerHTML = '';
+        const vals = [...this.selected];
+        if (!vals.length){ this.elPh.style.display=''; return; }
+        this.elPh.style.display='none';
+        const optByVal = new Map(this.allOptions.map(o=>[o.value,o.label]));
+        vals.slice(0,2).forEach(v=>{
+          const chip = document.createElement('span');
+          chip.className='ms-chip'; chip.textContent = optByVal.get(v) || v;
+          this.elChips.appendChild(chip);
+        });
+        if (vals.length>2){
+          const more = document.createElement('span');
+          more.className='ms-chip'; more.textContent = `+${vals.length-2}`;
+          this.elChips.appendChild(more);
+        }
+      }
+      bindGlobalClose(){
+        document.addEventListener('click',(e)=>{
+          if(!this.root.contains(e.target)) this.close();
+        });
+      }
+      getValues(){ return [...this.selected]; }
+      setValues(v=[]){ this.selected = new Set(v); this.renderControl(); this.syncSummary(); }
+      syncSummary(){
+        if (!this.summaryEl) return;
+        const v = this.getValues();
+        this.summaryEl.textContent = v.length ? `Seleccionado: ${v.join(', ')}` : 'Sin filtro';
+      }
+      setOptions(options=[]){
+        const prev = new Set(this.selected);
+        this.allOptions = options;
+        this.filtered = [...options];
+        const valid = new Set(options.map(o=>o.value));
+        this.selected = new Set([...prev].filter(x=>valid.has(x)));
+        this.renderControl();
+        this.renderList();
+        this.syncSummary();
+      }
+    }
+
+    // =================== Datos ===================
+    let msColeccion, msFabricante, msMarca;
+    let dataBase = [];
+    let dataView = [];
+
+    function extractVendedores(rows){
+      const set = new Set();
+      (rows || []).forEach(r=>{
+        const cv = r.codVendedores || r.CodVendedores || {};
+        Object.keys(cv).forEach(k=>set.add(k));
+      });
+      return [...set].sort((a,b)=>a.localeCompare(b));
+    }
+
+    function buildOptionsFromData(rows){
+      const colec = new Map();
+      const fab   = new Map();
+      const marca = new Map();
+
+      (rows || []).forEach(r=>{
+        const codColeccion = String(getField(r,'codColeccion','CodColeccion') || '');
+        const nomColeccion = String(getField(r,'nomColeccion','NomColeccion') || codColeccion);
+        if (codColeccion) colec.set(codColeccion, `${nomColeccion} (${codColeccion})`);
+
+        const nomFabricante = String(getField(r,'nomFabricante','NomFabricante') || '');
+        if (nomFabricante) fab.set(nomFabricante, nomFabricante);
+
+        const nomMarca = String(getField(r,'marca','Marca') || '');
+        if (nomMarca) marca.set(nomMarca, nomMarca);
+      });
+
+      const toOpts = (m) => [...m.entries()]
+        .sort((a,b)=>a[1].localeCompare(b[1]))
+        .map(([value,label])=>({value, label}));
+
+      return { coleccion: toOpts(colec), fabricante: toOpts(fab), marca: toOpts(marca) };
+    }
+
+    function renderTotales(rows){
+      const totalGlobal = (rows || []).reduce((acc,r)=>{
+        const t = toInt(getField(r,'totalPares','TotalPares') ?? getField(r,'TOTAL_PARES','TOTAL_PARES') ?? 0);
+        return acc + t;
+      },0);
+      $('totalGlobalPares').textContent = fmtInt(totalGlobal);
+      $('lblFilas').textContent = `${(rows||[]).length.toLocaleString('es-PE')} filas`;
+    }
+
+    function ensureHeaderVendedores(vendedores){
+      const tr = $('trHeadConsolidado');
+      if(!tr) return;
+
+      [...tr.querySelectorAll('th[data-vendedor]')].forEach(th=>th.remove());
+
+      const thTotal = $('thTotal');
+      vendedores.forEach(v=>{
+        const th = document.createElement('th');
+        th.dataset.vendedor = v;
+        th.className = 'td-num vend-col';
+        th.textContent = v.toUpperCase();
+        tr.insertBefore(th, thTotal);
+      });
+    }
+
+    function renderTabla(rows){
+      const tbody = $('tbodyConsolidado');
+      if(!tbody) return;
+
+      if (!rows || !rows.length){
+        ensureHeaderVendedores([]);
+        tbody.innerHTML = `<tr><td colspan="999" class="text-center text-muted py-3">Sin resultados</td></tr>`;
+        return;
+      }
+
+      const vendedores = extractVendedores(rows);
+      ensureHeaderVendedores(vendedores);
+
+      let totalGeneral = 0;
+
+      const html = rows.map(r=>{
+        const cv = r.codVendedores || r.CodVendedores || {};
+
+        const CodColeccion = getField(r,'codColeccion','CodColeccion');
+        const NomColeccion = getField(r,'nomColeccion','NomColeccion');
+        const CodLinea = getField(r,'codLinea','CodLinea');
+        const NomLinea = getField(r,'nomLinea','NomLinea');
+        const CodReferenciaLinea = getField(r,'codReferenciaLinea','CodReferenciaLinea');
+        const NomReferenciaLinea = getField(r,'nomReferenciaLinea','NomReferenciaLinea');
+        const CodColor = getField(r,'codColor','CodColor');
+        const NomColor = getField(r,'nomColor','NomColor');
+        const Marca = getField(r,'marca','Marca');
+        const Clase = getField(r,'clase','Clase');
+        const Imagen = getField(r,'imagen','Imagen');
+        const NomFabricante = getField(r,'nomFabricante','NomFabricante');
+
+        const TOTAL_PARES = toInt(getField(r,'totalPares','TotalPares') ?? getField(r,'TOTAL_PARES','TOTAL_PARES') ?? 0);
+        totalGeneral += TOTAL_PARES;
+
+        const vendCols = vendedores.map(v=>{
+          const val = toInt(cv[v] ?? 0);
+          return `<td class="td-num vend-col">${fmtInt(val)}</td>`;
+        }).join('');
+
+        return `
+          <tr>
+            <td class="img-col">
+              ${Imagen ? `<img class="img-thumb" src="${esc(Imagen)}" alt="img" loading="lazy"
+                onerror="this.style.display='none'; this.parentElement.textContent='—';">` : '—'}
+            </td>
+
+            <td>${esc(CodColeccion)}</td>
+            <td>${esc(NomColeccion)}</td>
+            <td>${esc(CodLinea)}</td>
+            <td>${esc(NomLinea)}</td>
+            <td>${esc(CodReferenciaLinea)}</td>
+            <td>${esc(NomReferenciaLinea)}</td>
+            <td>${esc(CodColor)}</td>
+            <td>${esc(NomColor)}</td>
+            <td>${esc(Marca)}</td>
+            <td>${esc(Clase)}</td>
+            <td class="td-url" title="${esc(Imagen)}" hidden>${esc(Imagen)}</td>
+            <td>${esc(NomFabricante)}</td>
+
+            ${vendCols}
+
+            <td class="td-num fw-bold">${fmtInt(TOTAL_PARES)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const totalVendHtml = vendedores.map(v=>{
+        const sum = rows.reduce((acc,r)=>{
+          const cv = r.codVendedores || r.CodVendedores || {};
+          return acc + toInt(cv[v] ?? 0);
+        },0);
+        return `<td class="td-num fw-bold vend-col">${fmtInt(sum)}</td>`;
+      }).join('');
+
+      const totalRow = `
+        <tr class="total-row">
+          <td colspan="12">TOTAL</td>
+          ${totalVendHtml}
+          <td class="td-num fw-bold">${fmtInt(totalGeneral)}</td>
+        </tr>
+      `;
+
+      tbody.innerHTML = html + totalRow;
+    }
+
+    function applyClientFilters(){
+      const selColec = new Set(msColeccion?.getValues() || []);
+      const selFab   = new Set(msFabricante?.getValues() || []);
+      const selMarca = new Set(msMarca?.getValues() || []);
+      const q = normText($('txtModelo')?.value || '');
+
+      dataView = (dataBase || []).filter(r=>{
+        const codColeccion = String(getField(r,'codColeccion','CodColeccion') || '');
+        const nomFabricante = String(getField(r,'nomFabricante','NomFabricante') || '');
+        const nomMarca = String(getField(r,'marca','Marca') || '');
+
+        if (selColec.size && !selColec.has(codColeccion)) return false;
+        if (selFab.size && !selFab.has(nomFabricante)) return false;
+        if (selMarca.size && !selMarca.has(nomMarca)) return false;
+
+        if (q){
+          const hay = [
+            getField(r,'nomLinea','NomLinea'),
+            getField(r,'nomReferenciaLinea','NomReferenciaLinea'),
+            getField(r,'codReferenciaLinea','CodReferenciaLinea'),
+            getField(r,'codLinea','CodLinea'),
+            getField(r,'nomColor','NomColor'),
+            getField(r,'codColor','CodColor'),
+            getField(r,'codColeccion','CodColeccion')
+          ].some(x => normText(x).includes(q));
+          if (!hay) return false;
+        }
+        return true;
+      });
+
+      renderTabla(dataView);
+      renderTotales(dataView);
+
+      // Ajusta combos a lo visible (si no quieres, comenta estas 4 líneas)
+      const opts = buildOptionsFromData(dataView.length ? dataView : dataBase);
+      msColeccion.setOptions(opts.coleccion);
+      msFabricante.setOptions(opts.fabricante);
+      msMarca.setOptions(opts.marca);
+
+      $('gridScroll').scrollTop = 0;
+
+      tempExportRows = buildExportPayload(dataView);
+
+    }
+
+    // =================== EXPORT EXCEL CON IMÁGENES (embebidas) ===================
+    async function fetchImageAsBase64(url){
+      // OJO: si el servidor de imágenes NO permite CORS, el fetch fallará.
+      // En ese caso, devolvemos null y exportamos sin imagen embebida (solo URL).
+      try{
+        const res = await fetch(url, { mode: 'cors' });
+        if(!res.ok) return null;
+        const blob = await res.blob();
+        const dataUrl = await new Promise((resolve, reject)=>{
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        // dataUrl: "data:image/jpeg;base64,...."
+        const base64 = String(dataUrl).split(',')[1];
+        const mime = String(dataUrl).split(';')[0].replace('data:','');
+        return { base64, mime };
+      }catch{
+        return null;
+      }
+    }
+
+    function excelCol(n){
+      // 1->A
+      let s = '';
+      while(n>0){
+        let m = (n-1)%26;
+        s = String.fromCharCode(65+m) + s;
+        n = Math.floor((n-1)/26);
+      }
+      return s;
+    }
+
+
+    // =================== FETCH ===================
+    async function cargarBase(){
+      showSpinner();
+      try{
+        const body = { CodColeccion:"", Fabricante:"", DesMarca:"", Modelo:"" };
+        const res = await fetch(URL_API,{
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify(body)
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        dataBase = Array.isArray(data) ? data : [];
+        dataView = [...dataBase];
+        tempExportRows = buildExportPayload(dataView);
+
+        const opts = buildOptionsFromData(dataBase);
+        msColeccion  = new MultiSelect($('ms-CodColeccion'),  { placeholder:'Colección…',  options:opts.coleccion,  summaryId:'colecSummary' });
+        msFabricante = new MultiSelect($('ms-CodFabricante'), { placeholder:'Fabricante…', options:opts.fabricante, summaryId:'fabSummary' });
+        msMarca      = new MultiSelect($('ms-CodMarca'),      { placeholder:'Marca…',      options:opts.marca,      summaryId:'marcSummary' });
+
+        renderTabla(dataView);
+        renderTotales(dataView);
+      }catch(err){
+        console.error(err);
+        alert('Error al cargar el consolidado.');
+      }finally{
+        hideSpinner();
+      }
+    }
+
+    function aplicarFiltros(){
+      showSpinner();
+      try{ applyClientFilters(); }
+      finally{ setTimeout(hideSpinner, 120); }
+    }
+
+    function limpiarFiltros(){
+      msColeccion?.setValues([]);
+      msFabricante?.setValues([]);
+      msMarca?.setValues([]);
+      $('txtModelo').value = '';
+      aplicarFiltros();
+    }
+
+    function buildExportPayload(rows){
+      return (rows || []).map(r => ({
+        codColeccion: getField(r,'codColeccion','CodColeccion'),
+        nomColeccion: getField(r,'nomColeccion','NomColeccion'),
+        codLinea: getField(r,'codLinea','CodLinea'),
+        nomLinea: getField(r,'nomLinea','NomLinea'),
+        codReferenciaLinea: getField(r,'codReferenciaLinea','CodReferenciaLinea'),
+        nomReferenciaLinea: getField(r,'nomReferenciaLinea','NomReferenciaLinea'),
+        codColor: getField(r,'codColor','CodColor'),
+        nomColor: getField(r,'nomColor','NomColor'),
+        marca: getField(r,'marca','Marca'),
+        clase: getField(r,'clase','Clase'),
+        imagen: getField(r,'imagen','Imagen'),         // NO se muestra, pero se envía
+        nomFabricante: getField(r,'nomFabricante','NomFabricante'),
+        totalPares: toInt(getField(r,'totalPares','TotalPares') ?? getField(r,'TOTAL_PARES','TOTAL_PARES') ?? 0),
+        codVendedores: (r.codVendedores || r.CodVendedores || {}) // dinámico
+      }));
+    }
+
+    async function exportarExcelBackend(){
+  showSpinner();
+  try{
+    // Puedes incluir filtros también si quieres reproducibilidad:
+
+    const res = await fetch(URL_EXPORT, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(tempExportRows)
+    });
+
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Si backend retorna archivo:
+    const blob = await res.blob();
+    saveAs(blob, `Consolidado_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }catch(err){
+    console.error(err);
+    alert('Error al exportar Excel desde el backend.');
+  }finally{
+    hideSpinner();
+  }
+}
+
+    // =================== INIT ===================
+    document.addEventListener('DOMContentLoaded', async ()=>{
+      await cargarBase();
+
+      $('btnBuscar').addEventListener('click', aplicarFiltros);
+      $('btnLimpiar').addEventListener('click', limpiarFiltros);
+
+      $('txtModelo').addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter'){ e.preventDefault(); aplicarFiltros(); }
+      });
+
+      $('btnExportar').addEventListener('click', exportarExcelBackend);
+
+     
+    });
+
+
+  </script>
+
+</body>
+</html>

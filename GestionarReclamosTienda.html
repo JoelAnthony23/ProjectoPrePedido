@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Galería - Azaleia</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffaf7;
+      margin: 0;
+      padding: 20px 40px 40px;
+    }
+
+    .contenedor {
+      border: 3px dotted #e66b00;
+      border-radius: 20px;
+      padding: 30px;
+      background-color: #f4f6f8;
+      max-width: 1200px;
+      margin: 100px auto 40px auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-flotante, .btn-flotanteRegresar {
+      position: fixed;
+      z-index: 1000;
+      background-color: #e66b00;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s ease, transform 0.2s;
+    }
+
+    .btn-flotante { top: 20px; right: 30px; }
+    .btn-flotanteRegresar { top: 20px; left: 30px; }
+
+    .btn-flotante:hover, .btn-flotanteRegresar:hover {
+      background-color: #cc5f00;
+      transform: scale(1.05);
+    }
+
+    .card-gallery-wrapper { padding-right: 10px; }
+
+    .card-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: flex-start;
+    }
+
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 10px;
+      width: 260px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      background-color: #fffdfb;
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+
+    .card:hover { transform: scale(1.02); }
+
+    /* ✅ Título (nombre de tienda) dentro del card */
+    .card-title-shop{
+      font-weight: 900;
+      font-size: 1.05rem;
+      margin: 2px 0 10px 0;
+      text-align: left;
+      color: #212529;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-height: 24px;
+    }
+    .card-title-shop .badge-shop{
+      background: rgba(230, 107, 0, 0.12);
+      border: 1px solid rgba(230, 107, 0, 0.35);
+      color: #e66b00;
+      font-weight: 900;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: .82rem;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display:inline-block;
+    }
+
+    .img-wrap {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .main-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      transition: transform 0.4s ease;
+      cursor: zoom-in;
+      display: block;
+    }
+
+    .card:hover .main-img { transform: scale(1.1); }
+
+    .img-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(230, 107, 0, 0.92);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .card p {
+      margin: 5px 0;
+      font-size: 0.9rem;
+      color: #333;
+      text-align: left;
+    }
+
+    #spinner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner-border.orange {
+      color: #e66b00;
+      width: 3.5rem;
+      height: 3.5rem;
+    }
+
+    .btn-azaleia {
+      background-color: #e66b00;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .btn-azaleia:hover {
+      background-color: #cc5f00;
+      transform: scale(1.05);
+    }
+
+    .paginacion {
+      margin: 10px 0 20px;
+      text-align: center;
+    }
+
+    /* Zoom */
+    .zoom-float {
+      position: absolute;
+      display: none;
+      width: 200px;
+      height: 200px;
+      border: 2px solid #e66b00;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      z-index: 3000;
+      overflow: hidden;
+    }
+
+    .zoom-float img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* ===== Carrusel: flechas color Azaleia ===== */
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+      background-image: none;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 999px;
+      background: rgba(230, 107, 0, 0.92);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .carousel-control-prev-icon::before,
+    .carousel-control-next-icon::before {
+      font-family: bootstrap-icons;
+      font-size: 1.4rem;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .carousel-control-prev-icon::before { content: "\F284"; }
+    .carousel-control-next-icon::before { content: "\F285"; }
+
+    .carousel-counter {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 5;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    /* =========================
+       ✅ POPUP LIBRO RECLAMOS
+       ========================= */
+    .reclamo-modal .section-title{
+      background-color:#c76a2d;
+      color:white;
+      padding:8px;
+      font-weight:bold;
+      text-transform:uppercase;
+      border-radius:8px;
+      font-size:13px;
+      margin: 14px 0 10px;
+    }
+    .reclamo-modal label{
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .reclamo-modal .enviar-btn{
+      background-color: #c76a2d;
+      color: white;
+      font-weight: bold;
+      border: none;
+      padding: 10px 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-block;
+      width: auto;
+    }
+    .reclamo-modal .enviar-btn:hover{ background-color:#b15518; }
+    .reclamo-modal .enviar-btn:active{ background-color:#682d02; transform:scale(.98); }
+
+    /* ✅ Header del popup de detalle con acciones arriba */
+    #modalImagenes .modal-header{
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    #modalImagenes #accionesDetalle .btn{
+      white-space: nowrap;
+    }
+
+    /* Overlay blur cuando abre reclamo encima del detalle */
+    .modal.modal-blocked { pointer-events: none; }
+    .modal.modal-blocked .modal-content { filter: blur(1px); opacity: .9; }
+
+    .swal2-container { z-index: 999999 !important; }
+
+    /* Placeholder tipo skeleton */
+.img-skeleton{
+  width: 100%;
+  height: 160px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,#f1f3f5 25%,#e9ecef 37%,#f1f3f5 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.1s ease infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes shimmer{
+  0%{ background-position: 100% 0; }
+  100%{ background-position: 0 0; }
+}
+.main-img.is-loading{
+  opacity: 0;        /* invisible pero sigue “existiendo” */
+}
+.main-img.is-loaded{
+  opacity: 1;
+  transition: opacity .2s ease;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <!-- ✅ AFUERA: Botón Regresar (izquierda) -->
+  <button class="btn-flotanteRegresar" onclick="window.location.href='GestionarReclamos.html'">
+    <i class="bi bi-arrow-left"></i> Regresar
+  </button>
+
+  <!-- ✅ AFUERA: Botón Ver Reclamos (derecha) -->
+  <button class="btn-flotante" onclick="window.location.href='VerReclamoTienda.html'">
+    <i class="bi bi-info-circle"></i> Ver Reclamos
+  </button>
+
+  <div class="contenedor">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <input type="text" id="buscadorImagenes" placeholder="Buscar por correo / asunto / título..."
+        style="width:70%; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:1rem;">
+
+      <div class="d-flex align-items-center gap-2">
+        <label for="pageSizeSelector" class="form-label mb-0 fw-semibold">Mostrar:</label>
+        <select id="pageSizeSelector" class="form-select w-auto">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="paginacion">
+      <button id="btnAnterior" class="btn-azaleia" disabled>⬅ Anterior</button>
+      <button id="btnSiguiente" class="btn-azaleia" disabled>Siguiente ➡</button>
+    </div>
+
+    <div id="spinner-overlay">
+      <div class="spinner-border orange" role="status"></div>
+    </div>
+
+    <div class="card-gallery-wrapper">
+      <div id="galeriaRecibida" class="card-gallery"></div>
+    </div>
+  </div>
+
+  <div id="zoomFloat" class="zoom-float">
+    <img src="" alt="Preview zoom">
+  </div>
+
+  <!-- =========================
+       ✅ MODAL DETALLE (Carrusel)
+       ✅ SOLO QUEDA: Registrar reclamo
+       ========================= -->
+  <div class="modal fade" id="modalImagenes" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-header">
+          <div class="me-3">
+            <h5 class="modal-title mb-0" id="modalTitulo">Imágenes</h5>
+            <small class="text-muted" id="modalSubtitulo"></small>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 ms-auto flex-wrap" id="accionesDetalle">
+            <button type="button" class="btn btn-warning" id="btnRegistrarReclamoDetalle">
+              <i class="bi bi-journal-text"></i> Registrar reclamo
+            </button>
+          </div>
+
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="position-relative">
+            <div class="carousel-counter" id="carouselCounter">1 / 1</div>
+
+            <div id="carouselImgs" class="carousel slide" data-bs-ride="false">
+              <div class="carousel-inner" id="carouselInner"></div>
+
+              <button class="carousel-control-prev" type="button" data-bs-target="#carouselImgs" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+              </button>
+
+              <button class="carousel-control-next" type="button" data-bs-target="#carouselImgs" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <div><b>Correo:</b> <span id="modalCorreo"></span></div>
+            <div><b>Asunto:</b> <span id="modalAsunto"></span></div>
+            <div><b>Título:</b> <span id="modalTituloTexto"></span></div>
+            <div class="mt-2 text-muted small" id="modalExtraInfo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================
+       ✅ POPUP: Libro de reclamaciones
+       ====================== -->
+  <div class="modal fade reclamo-modal" id="reclamoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content" style="border-radius:18px;">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title mb-0">Libro de Reclamaciones</h5>
+            <small class="text-muted">CALZADOS AZALEIA PERU S.A – Av. Prolongación Arica Nro. 2248 – RUC: 20374412524</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body">
+          <form id="reclamoForm" class="needs-validation" novalidate>
+            <input type="hidden" id="idsAsignacion" name="idsAsignacion" value="">
+
+            <div class="section">
+              <div class="section-title">1. Identificación del Usuario</div>
+
+              <div class="row g-3">
+                <div class="col-6">
+                  <label for="nroFolio" class="form-label">Número Folio:</label>
+                  <input type="text" id="nroFolio" class="form-control">
+                </div>
+                <div class="col-6">
+                  <label for="nroTicket" class="form-label">Boleta o Factura:</label>
+                  <input type="text" id="nroTicket" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="nombre" class="form-label">Nombre o Razón Social:</label>
+                  <input type="text" id="nombre" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="apellido" class="form-label">Apellidos:</label>
+                  <input type="text" id="apellido" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="tipoDocumento" class="form-label">Tipo de Documento:</label>
+                  <select id="tipoDocumento" class="form-select" required></select>
+                  <div class="invalid-feedback">Seleccione un tipo de documento.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="numeroDocumento" class="form-label">Número de Documento:</label>
+                  <input type="text" id="numeroDocumento" class="form-control" required>
+                  <div class="invalid-feedback">Ingrese un número de documento.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="email" class="form-label">E-Mail:</label>
+                  <input type="email" id="email" class="form-control">
+                  <div class="invalid-feedback">Ingrese un correo válido.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="telefono" class="form-label">Teléfono:</label>
+                  <input type="text" id="telefono" class="form-control">
+                </div>
+
+                <div class="col-12">
+                  <label for="direccion" class="form-label">Dirección:</label>
+                  <input type="text" id="direccion" class="form-control">
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">2. Identificación de quien presenta el reclamo (si el usuario es menor)</div>
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <label for="Parentezco2" class="form-label">Parentesco:</label>
+                  <select id="Parentezco2" class="form-select"></select>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="nombreH" class="form-label">Nombres:</label>
+                  <input type="text" id="nombreH" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="apellidoH" class="form-label">Apellidos:</label>
+                  <input type="text" id="apellidoH" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="tipoDocumentoH" class="form-label">Tipo de Documento:</label>
+                  <select id="tipoDocumentoH" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                  <label for="numeroDocumentoH" class="form-label">Número de Documento:</label>
+                  <input type="text" id="numeroDocumentoH" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="emailH" class="form-label">E-Mail:</label>
+                  <input type="email" id="emailH" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="telefonoH" class="form-label">Teléfono:</label>
+                  <input type="text" id="telefonoH" class="form-control">
+                </div>
+
+                <div class="col-12">
+                  <label for="direccionH" class="form-label">Dirección:</label>
+                  <input type="text" id="direccionH" class="form-control">
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">3. Detalle del Reclamo</div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="fechaReclamo" class="form-label">Fecha del Reclamo:</label>
+                  <input type="date" id="fechaReclamo" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="MontoReclamado" class="form-label">Monto Reclamado</label>
+                  <input type="number" id="MontoReclamado" class="form-control" min="0" step="0.01">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="tipoReclamo" class="form-label">Tipo de Reclamo (*):</label>
+                  <select id="tipoReclamo" class="form-select" required></select>
+                  <div class="invalid-feedback">Seleccione el tipo de reclamo.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="tipoContrato" class="form-label">Identificación del bien contratado:</label>
+                  <select id="tipoContrato" class="form-select" required></select>
+                  <div class="invalid-feedback">Seleccione el tipo de contrato.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="OrigenOcurrencia" class="form-label">Origen de la Ocurrencia:</label>
+                  <select id="OrigenOcurrencia" class="form-select" required></select>
+                  <div class="invalid-feedback">Seleccione el origen.</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="LugarOcurrencia" class="form-label">Lugar de Ocurrencia:</label>
+                  <select id="LugarOcurrencia" class="form-select" required></select>
+                  <div class="invalid-feedback">Seleccione el lugar.</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="detalleReclamo" class="form-label">Detalle del Reclamo:</label>
+                  <textarea id="detalleReclamo" class="form-control" rows="4" required></textarea>
+                  <div class="invalid-feedback">Ingrese el detalle del reclamo.</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="Pedido" class="form-label">Pedido:</label>
+                  <input id="Pedido" class="form-control">
+                </div>
+
+                <div class="col-12 small text-muted">
+                  *Queja: Disconformidad no relacionada a productos/servicios, malestar respecto a la atención.<br>
+                  *Reclamo: Disconformidad relacionada a productos/servicios.
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="enviar-btn" id="btnEnviarReclamo">
+            <i class="bi bi-send"></i> Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap + SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    // =========================
+    // APIs (AJUSTA SI CAMBIAN)
+    // =========================
+    const API_URL = "https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetImgCorreoAsync";
+
+    const API_TIPO_DOC   = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetTipoDocumentoASync';
+    const API_TIPO_REC   = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetTipoReclamoASync';
+    const API_TIPO_CONT  = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetTipoContratoASync';
+    const API_ORIGEN     = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetOrigenOcurrenciaASync';
+    const API_LUGAR      = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetLugarReclamoASync';
+    const API_PARENTESCO = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/GetParantescoASync';
+
+    const API_INSERT_RECLAMO = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/InsertUsuarioAsync';
+    const API_ENVIO_CORREO_FOLIO = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/EnvioCorreoASync';
+
+    const API_UPD_ASIGNACIONIMG = 'https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/Reclamaciones/UpdAsignacionImgReclamacionesAsync';
+
+    // =========================
+    // Estado local
+    // =========================
+    let grupos = [];
+    let pageSize = 100;
+    let currentPage = 1;
+    let valorBusqueda = '';
+    let carouselInstance = null;
+    let currentCarouselTotal = 1;
+
+    let currentGrupo = null;
+    let canal = 'TIENDA';
+    const imageStore = new Map(); // key -> array base64
+let lazyIO = null;            // para reutilizar observer
+
+    function toast(icon, text, ms = 2200) {
+      return Swal.fire({ icon, text, timer: ms, showConfirmButton: false });
+    }
+    function loadingSwal(title, text) {
+      return Swal.fire({
+        title: title || 'Procesando…',
+        text: text || 'Por favor espera…',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: false,
+        showConfirmButton: false,
+        backdrop: true,
+        didOpen: () => Swal.showLoading()
+      });
+    }
+
+    function looksBrokenBase64(b64) {
+      return typeof b64 === "string" && b64.startsWith("77+9");
+    }
+    function guessMimeFromBase64(b64) {
+      if (!b64) return "application/octet-stream";
+      if (b64.startsWith("/9j/")) return "image/jpeg";
+      if (b64.startsWith("iVBORw0KGgo")) return "image/png";
+      if (b64.startsWith("R0lGOD")) return "image/gif";
+      if (b64.startsWith("UklGR")) return "image/webp";
+      return "application/octet-stream";
+    }
+    function toDataUrl(b64) {
+      const mime = guessMimeFromBase64(b64);
+      return `data:${mime};base64,${b64}`;
+    }
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function getFiltrado() {
+      const q = (valorBusqueda || '').toLowerCase();
+      if (!q) return grupos;
+      return grupos.filter(g =>
+        (g.correoUsuario || '').toLowerCase().includes(q) ||
+        (g.asuntoCorreo || '').toLowerCase().includes(q) ||
+        (g.titulo || '').toLowerCase().includes(q) ||
+        (g.tienda || '').toLowerCase().includes(q)       // ✅ también filtra por tienda
+      );
+    }
+
+    // ✅ GET con canal como parámetro + CAPTURA CAMPO "tienda"
+    async function cargarTodo() {
+      const galeria = document.getElementById('galeriaRecibida');
+      const spinner = document.getElementById('spinner-overlay');
+
+      spinner.style.display = 'flex';
+      galeria.style.display = 'none';
+
+      try {
+        const url = `${API_URL}?canal=${encodeURIComponent(canal)}`;
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const map = new Map();
+
+        (Array.isArray(data) ? data : []).forEach(row => {
+          const correo = row.correoUsuario ?? '';
+          const asunto = row.asuntoCorreo ?? '';
+          const titulo = row.titulo ?? '';
+          const tienda = row.tienda ?? row.Tienda ?? ''; // ✅ por si viene con mayúscula
+          const key = `${tienda}||${correo}||${asunto}||${titulo}`; // ✅ incluye tienda en agrupación
+          const ids = row.ids ?? '';
+
+          if (!map.has(key)) {
+            map.set(key, {
+              key,
+              tienda,
+              correoUsuario: correo,
+              asuntoCorreo: asunto,
+              titulo: titulo,
+              imagenesBase64: [],
+              ids: ids
+            });
+          }
+
+          const imgs = Array.isArray(row.imagenesBase64) ? row.imagenesBase64 : [];
+          imgs.forEach(b64 => { if (b64) map.get(key).imagenesBase64.push(b64); });
+        });
+
+        grupos = Array.from(map.values());
+        currentPage = 1;
+        renderPagina();
+      } catch (err) {
+        galeria.innerHTML = '<p class="text-danger">❌ Error al cargar las imágenes.</p>';
+        console.error(err);
+      } finally {
+        spinner.style.display = 'none';
+        galeria.style.display = 'flex';
+      }
+    }
+
+    function renderPagina() {
+      const filtrado = getFiltrado();
+      const totalPages = Math.max(1, Math.ceil(filtrado.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+
+      renderizarGaleria(filtrado.slice(start, end));
+
+      document.getElementById('btnAnterior').disabled = currentPage <= 1;
+      document.getElementById('btnSiguiente').disabled = currentPage >= totalPages;
+    }
+  function initLazyImages(scopeEl = document) {
+  const imgs = scopeEl.querySelectorAll('img.main-img[data-key][data-idx]');
+
+  const loadImg = (img) => {
+    const wrap = img.closest('.img-wrap');
+    const skeleton = wrap?.querySelector('.img-skeleton');
+
+    const key = img.getAttribute('data-key');
+    const idx  = parseInt(img.getAttribute('data-idx'), 10) || 0;
+
+    const arr = imageStore.get(key) || [];
+    const b64 = arr[idx];
+
+    if (!b64) {
+      if (skeleton) skeleton.remove();
+      img.style.display = 'block';
+      img.alt = 'Sin imagen';
+      img.removeAttribute('data-key');
+      img.removeAttribute('data-idx');
+      return;
+    }
+
+    try {
+      const url = b64ToBlobUrl(b64);
+
+      img.onload = () => {
+        if (skeleton) skeleton.remove();
+        img.classList.remove('is-loading');
+        img.classList.add('is-loaded');
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+        img.removeAttribute('data-key');
+        img.removeAttribute('data-idx');
+      };
+
+     img.onerror = () => {
+      if (skeleton) skeleton.remove();
+      img.classList.remove('is-loading');
+      img.classList.add('is-loaded');
+      img.alt = 'No se pudo cargar';
+      img.style.objectFit = 'contain';
+      img.style.background = '#fff';
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      img.removeAttribute('data-key');
+      img.removeAttribute('data-idx');
+    };
+
+      img.src = url;
+
+    } catch (e) {
+      if (skeleton) skeleton.remove();
+      img.style.display = 'block';
+      img.alt = 'Base64 inválido';
+      img.style.objectFit = 'contain';
+      img.style.background = '#fff';
+      console.error('Error b64:', e, 'head:', String(b64).slice(0, 30));
+      img.removeAttribute('data-key');
+      img.removeAttribute('data-idx');
+    }
+  };
+
+  // Fallback sin IntersectionObserver
+  if (!('IntersectionObserver' in window)) {
+    imgs.forEach(loadImg);
+    return;
+  }
+
+  // Reutiliza 1 solo observer global
+  if (!window.lazyIO) {
+    window.lazyIO = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        loadImg(entry.target);
+        obs.unobserve(entry.target);
+      });
+    }, { root: null, rootMargin: '350px 0px', threshold: 0.01 });
+  }
+
+  imgs.forEach(img => window.lazyIO.observe(img));
+}
+
+
+    // ✅ Card ahora muestra "tienda" como título
+   async function renderizarGaleria(items) {
+  const galeria = document.getElementById('galeriaRecibida');
+  const zoomFloat = document.getElementById('zoomFloat');
+  const zoomImg = zoomFloat.querySelector('img');
+
+  galeria.innerHTML = '';
+
+  if (!items || items.length === 0) {
+    galeria.innerHTML = '<p class="text-muted">No se encontraron resultados.</p>';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  const BATCH = 20;
+
+  for (let i = 0; i < items.length; i++) {
+    const g = items[i];
+
+    const primera = g.imagenesBase64?.[0] ?? '';
+    const total = g.imagenesBase64?.length ?? 0;
+    const primeraRota = !primera || looksBrokenBase64(primera);
+
+    // ✅ guardo array en memoria (NO en HTML)
+    imageStore.set(g.key, g.imagenesBase64 || []);
+
+    const nombreTienda = (g.tienda || '').trim() || 'Tienda';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const imgHtml = primeraRota
+      ? `<div class="text-warning" style="font-size:0.85rem; text-align:left;">
+          ⚠️ Imagen no válida
+        </div>`
+      : `
+        <div class="img-wrap">
+          <span class="img-badge">#1</span>
+          <div class="img-skeleton"></div>
+
+          <!-- ✅ ya NO guardamos base64 aquí -->
+          <img data-key="${g.key}" data-idx="0"
+                class="main-img is-loading"
+               loading="lazy"
+               decoding="async"              
+               alt="Imagen 1">
+        </div>
+      `;
+
+    card.innerHTML = `
+      <div class="card-title-shop">
+        <span class="badge-shop" title="${escapeHtml(nombreTienda)}">${escapeHtml(nombreTienda)}</span>
+      </div>
+
+      ${imgHtml}
+
+      <p><strong>Correo:</strong> ${escapeHtml(g.correoUsuario)}</p>
+      <p><strong>Asunto:</strong> ${escapeHtml(g.asuntoCorreo)}</p>
+
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <span class="text-muted" style="font-size:0.85rem;">${total} img</span>
+        <button class="btn btn-link p-0" style="text-decoration:none; color:#0d6efd;">Ver más</button>
+      </div>
+    `;
+
+    // ✅ Zoom: si aún no cargó, lo generamos desde store
+    const mainImg = card.querySelector('img.main-img');
+    if (mainImg) {
+      mainImg.addEventListener('mousemove', (e) => {
+        zoomFloat.style.display = 'block';
+        const arr = imageStore.get(g.key) || [];
+        zoomImg.src = mainImg.src || toDataUrl(arr[0]);
+        zoomFloat.style.top = `${e.pageY + 20}px`;
+        zoomFloat.style.left = `${e.pageX + 20}px`;
+      });
+
+      mainImg.addEventListener('mouseleave', () => {
+        zoomFloat.style.display = 'none';
+      });
+    }
+
+    card.querySelector('button').addEventListener('click', () => abrirModalCarrusel(g));
+
+    fragment.appendChild(card);
+
+    if ((i + 1) % BATCH === 0) {
+      galeria.appendChild(fragment);
+      initLazyImages(galeria);
+      await new Promise(r => requestAnimationFrame(r));
+    }
+  }
+
+  galeria.appendChild(fragment);
+  initLazyImages(galeria);
+}
+
+    function setCarouselCounter(current, total) {
+      document.getElementById('carouselCounter').textContent = `${current} / ${total}`;
+    }
+
+    async function abrirModalCarrusel(grupo) {
+      currentGrupo = grupo;
+
+      document.getElementById('modalTitulo').textContent = grupo.asuntoCorreo || 'Imágenes';
+      document.getElementById('modalSubtitulo').textContent = `Total: ${grupo.imagenesBase64.length}`;
+      document.getElementById('modalCorreo').textContent = grupo.correoUsuario || '';
+      document.getElementById('modalAsunto').textContent = grupo.asuntoCorreo || '';
+      document.getElementById('modalTituloTexto').textContent = grupo.titulo || '';
+
+      const inner = document.getElementById('carouselInner');
+      inner.innerHTML = '';
+
+      const imgs = Array.isArray(grupo.imagenesBase64) ? grupo.imagenesBase64 : [];
+      currentCarouselTotal = Math.max(1, imgs.length);
+      setCarouselCounter(1, currentCarouselTotal);
+
+      imgs.forEach((b64, i) => {
+        const roto = looksBrokenBase64(b64);
+
+        const slide = document.createElement('div');
+        slide.className = `carousel-item ${i === 0 ? 'active' : ''}`;
+
+        slide.innerHTML = roto
+          ? `<div class="text-warning p-3">⚠️ Imagen #${i + 1} no válida (base64 77+9...)</div>`
+          : `
+            <div class="position-relative">
+              <span class="img-badge" style="top:14px; left:14px;">#${i + 1}</span>
+              <img src="${toDataUrl(b64)}" class="d-block w-100"
+                   style="max-height:520px; object-fit:contain;" alt="Imagen ${i + 1}">
+            </div>
+          `;
+
+        inner.appendChild(slide);
+      });
+
+      const carouselEl = document.getElementById('carouselImgs');
+      carouselInstance = bootstrap.Carousel.getInstance(carouselEl) || new bootstrap.Carousel(carouselEl, { interval: false });
+      carouselInstance.to(0);
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalImagenes')).show();
+    }
+
+    function populateSelect(elementId, options) {
+      const select = document.getElementById(elementId);
+      if (!select) return;
+      select.innerHTML =
+        '<option value="">Seleccione...</option>' +
+        options.map(o => `<option value="${o.id}">${escapeHtml(o.nombre)}</option>`).join('');
+    }
+
+    function convertirFecha(fecha) {
+      if (!fecha) return "";
+      const partes = fecha.split('-');
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    let reclamoOptionsCargadas = false;
+
+    async function fetchOptionsReclamo() {
+      if (reclamoOptionsCargadas) return;
+
+      try {
+        const [
+          resTipoDocumento,
+          resTipoReclamo,
+          resTipoContrato,
+          resOrigen,
+          resLugar,
+          resTipoDocumentoH,
+          resParentesco
+        ] = await Promise.all([
+          fetch(API_TIPO_DOC),
+          fetch(API_TIPO_REC),
+          fetch(API_TIPO_CONT),
+          fetch(API_ORIGEN),
+          fetch(API_LUGAR),
+          fetch(API_TIPO_DOC),
+          fetch(API_PARENTESCO),
+        ]);
+
+        const datatipodoc   = await resTipoDocumento.json();
+        const dataTipoRec   = await resTipoReclamo.json();
+        const dataTipoCont  = await resTipoContrato.json();
+        const dataOrgOcu    = await resOrigen.json();
+        const dataLuRecl    = await resLugar.json();
+        const datatipodoc2  = await resTipoDocumentoH.json();
+        const dataParent    = await resParentesco.json();
+
+        populateSelect('tipoDocumento', datatipodoc);
+        populateSelect('tipoReclamo', dataTipoRec);
+        populateSelect('tipoContrato', dataTipoCont);
+        populateSelect('OrigenOcurrencia', dataOrgOcu);
+        populateSelect('LugarOcurrencia', dataLuRecl);
+        populateSelect('tipoDocumentoH', datatipodoc2);
+        populateSelect('Parentezco2', dataParent);
+
+        reclamoOptionsCargadas = true;
+      } catch (error) {
+        console.error('Error al obtener opciones:', error);
+        toast('error', 'Error cargando combos del reclamo', 2400);
+        throw error;
+      }
+    }
+
+    function setupReclamoInputGuards() {
+      const nd = document.getElementById("numeroDocumento");
+      const tel = document.getElementById("telefono");
+      if (nd) {
+        nd.addEventListener("input", function () {
+          this.value = this.value.replace(/\D/g, "");
+          if (this.value.length > 12) this.value = this.value.slice(0, 12);
+        });
+      }
+      if (tel) {
+        tel.addEventListener("input", function () {
+          this.value = this.value.replace(/\D/g, "");
+          if (this.value.length > 15) this.value = this.value.slice(0, 15);
+        });
+      }
+    }
+
+    async function enviarFormularioReclamo() {
+      const nroTicket = document.getElementById('nroTicket').value.trim();
+      const nroFolio = document.getElementById('nroFolio').value.trim();
+      const nombre = document.getElementById('nombre').value.trim();
+      const apellido = document.getElementById('apellido').value.trim();
+      const tipoDocumento = parseInt(document.getElementById('tipoDocumento').value, 10) || 0;
+      const numeroDocumento = document.getElementById('numeroDocumento').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const direccion = document.getElementById('direccion').value.trim();
+
+      const tipoReclamo = parseInt(document.getElementById('tipoReclamo').value, 10) || 0;
+      const tipoContrato = parseInt(document.getElementById('tipoContrato').value, 10) || 0;
+      const origenOcurrencia = parseInt(document.getElementById('OrigenOcurrencia').value, 10) || 0;
+      const lugarOcurrencia = parseInt(document.getElementById('LugarOcurrencia').value, 10) || 0;
+
+      const pedido = document.getElementById('Pedido').value.trim();
+      const detalleReclamo = document.getElementById('detalleReclamo').value.trim();
+      const montoReclamado = parseFloat(document.getElementById('MontoReclamado').value) || 0;
+
+      const fechaOcurrenciaTemp = document.getElementById('fechaReclamo').value.trim();
+      const fechaOcurrencia = convertirFecha(fechaOcurrenciaTemp);
+
+      const idsAsignacion = (document.getElementById('idsAsignacion')?.value ?? '').trim();
+
+      if (!nroTicket || !nombre || !tipoDocumento || !numeroDocumento || !detalleReclamo || !tipoReclamo || !tipoContrato || !origenOcurrencia || !lugarOcurrencia || !nroFolio) {
+        return Swal.fire("Campos incompletos", "Completa los campos obligatorios (incluyendo selects).", "warning");
+      }
+
+      const reclamos = [];
+
+      reclamos.push({
+        IdTipoDocumento: tipoDocumento,
+        Nombres: nombre,
+        Apellidos: apellido,
+        Direccion: direccion,
+        Telefono: telefono,
+        Email: email,
+        IdUbigeo: 1,
+        NumeroTicket: nroTicket,
+        IdTipoReclamo: tipoReclamo,
+        MontoReclamado: montoReclamado,
+        FechaOcurrencia: fechaOcurrencia,
+        IdOrigenOcurrencia: origenOcurrencia,
+        IdLugarReclamo: lugarOcurrencia,
+        DetalleReclamo: detalleReclamo,
+        IdTipoContrato: tipoContrato,
+        NroDocumento: numeroDocumento,
+        IdParentesco: 3,
+        DetallePedido: pedido || "-",
+        Marca: 1,
+        Canal: canal,
+        NroFolio: nroFolio
+      });
+
+      const nombreH = document.getElementById('nombreH').value.trim();
+      if (nombreH) {
+        reclamos.push({
+          IdTipoDocumento: parseInt(document.getElementById('tipoDocumentoH').value, 10) || 0,
+          Nombres: nombreH,
+          Apellidos: document.getElementById('apellidoH').value.trim(),
+          Direccion: document.getElementById('direccionH').value.trim(),
+          Telefono: document.getElementById('telefonoH').value.trim(),
+          Email: document.getElementById('emailH').value.trim(),
+          IdUbigeo: 1,
+          NumeroTicket: nroTicket,
+          IdTipoReclamo: tipoReclamo,
+          MontoReclamado: montoReclamado,
+          FechaOcurrencia: fechaOcurrencia,
+          IdOrigenOcurrencia: origenOcurrencia,
+          IdLugarReclamo: lugarOcurrencia,
+          DetalleReclamo: detalleReclamo,
+          IdTipoContrato: tipoContrato,
+          NroDocumento: document.getElementById('numeroDocumentoH').value.trim(),
+          IdParentesco: parseInt(document.getElementById('Parentezco2').value, 10) || 0,
+          DetallePedido: pedido || "-",
+          Marca: 1,
+          Canal: canal,
+          NroFolio: nroFolio
+        });
+      }
+
+      const requestData = { LReclamoRequest: reclamos };
+
+      try {
+        loadingSwal("Procesando...", "Enviando reclamo...");
+
+        const response = await fetch(API_INSERT_RECLAMO, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+          let errorData = null;
+          try { errorData = await response.json(); } catch {}
+          throw new Error(`Error servidor: ${JSON.stringify(errorData)}`);
+        }
+
+        const data = await response.json();
+
+        const asigUrl =
+          `${API_UPD_ASIGNACIONIMG}?nroFolio=${encodeURIComponent(data.nroFolio)}&ids=${encodeURIComponent(idsAsignacion)}`;
+
+        const asigImgResponse = await fetch(asigUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors'
+        });
+
+        if (!asigImgResponse.ok) {
+          throw new Error("Se registró el reclamo, pero falló la asignación de imágenes.");
+        }
+
+        const correoResponse = await fetch(`${API_ENVIO_CORREO_FOLIO}?NroFolio=${encodeURIComponent(data.nroFolio)}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors'
+        });
+
+        if (!correoResponse.ok) {
+          throw new Error("Se registró, pero falló el envío del correo de confirmación.");
+        }
+
+        Swal.close();
+
+        await Swal.fire({
+          title: "Registro exitoso",
+          text: `Reclamo enviado. Número de folio: ${data.nroFolio}`,
+          icon: "success"
+        });
+
+        document.getElementById("reclamoForm").reset();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('reclamoModal')).hide();
+
+      } catch (error) {
+        Swal.close();
+        Swal.fire({ title: "Error", text: `No se pudo enviar: ${error.message}`, icon: "error" });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarTodo();
+
+      document.getElementById('btnSiguiente').addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(getFiltrado().length / pageSize));
+        if (currentPage < totalPages) { currentPage++; renderPagina(); }
+      });
+
+      document.getElementById('btnAnterior').addEventListener('click', () => {
+        if (currentPage > 1) { currentPage--; renderPagina(); }
+      });
+
+      document.getElementById('pageSizeSelector').addEventListener('change', e => {
+        pageSize = parseInt(e.target.value, 10);
+        currentPage = 1;
+        renderPagina();
+      });
+
+      let debounceTimer;
+      document.getElementById('buscadorImagenes').addEventListener('input', e => {
+        clearTimeout(debounceTimer);
+        valorBusqueda = e.target.value.trim();
+        debounceTimer = setTimeout(() => {
+          currentPage = 1;
+          renderPagina();
+        }, 500);
+      });
+
+      document.getElementById('carouselImgs').addEventListener('slid.bs.carousel', (ev) => {
+        const activeIndex = ev.to ?? 0;
+        setCarouselCounter(activeIndex + 1, currentCarouselTotal);
+      });
+
+      const reclamoModalEl = document.getElementById('reclamoModal');
+      reclamoModalEl.addEventListener('shown.bs.modal', async () => {
+        document.getElementById("reclamoForm").reset();
+        try { await fetchOptionsReclamo(); } catch {}
+        setupReclamoInputGuards();
+      });
+
+      document.getElementById('btnEnviarReclamo').addEventListener('click', enviarFormularioReclamo);
+    });
+
+    document.getElementById('btnRegistrarReclamoDetalle')?.addEventListener('click', async () => {
+      try {
+        loadingSwal('Cargando…', 'Preparando formulario de reclamo…');
+
+        document.getElementById("reclamoForm").reset();
+        document.getElementById('idsAsignacion').value = (currentGrupo?.ids ?? '');
+
+        await fetchOptionsReclamo();
+        setupReclamoInputGuards();
+
+        Swal.close();
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('reclamoModal')).show();
+        document.getElementById('modalImagenes').classList.add('modal-blocked');
+      } catch (e) {
+        Swal.close();
+        toast('error', 'No se pudo preparar el formulario.', 2400);
+      }
+    });
+
+    document.getElementById('reclamoModal').addEventListener('hidden.bs.modal', () => {
+      document.getElementById('modalImagenes').classList.remove('modal-blocked');
+      if (document.querySelector('.modal.show')) document.body.classList.add('modal-open');
+    });
+    function normalizeB64(b64){
+  if (!b64) return '';
+  b64 = String(b64).trim();
+
+  // si ya viene como dataURL, úsalo tal cual
+  if (b64.startsWith('data:')) return b64;
+
+  // si viene con prefijo separado por coma (a veces llega así)
+  if (b64.includes(',')) b64 = b64.split(',').pop();
+
+  // quitar saltos de línea / espacios
+  b64 = b64.replace(/\s/g, '');
+
+  // base64url -> base64 (por si acaso)
+  b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+
+  return b64;
+}
+
+function guessMimeFromBase64(b64) {
+  b64 = normalizeB64(b64);
+  if (!b64) return "application/octet-stream";
+  if (b64.startsWith("/9j/")) return "image/jpeg";
+  if (b64.startsWith("iVBORw0KGgo")) return "image/png";
+  if (b64.startsWith("R0lGOD")) return "image/gif";
+  if (b64.startsWith("UklGR")) return "image/webp";
+  return "application/octet-stream";
+}
+function b64ToBlobUrl(b64){
+  // si ya es dataURL, úsalo directo
+  if (String(b64).trim().startsWith('data:')) return b64;
+
+  b64 = normalizeB64(b64);
+  const mime = guessMimeFromBase64(b64);
+
+  const bin = atob(b64);
+  const len = bin.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+
+  const blob = new Blob([bytes], { type: mime });
+  return URL.createObjectURL(blob);
+}
+
+  </script>
+</body>
+</html>

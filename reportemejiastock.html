@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock con Imagen - Export</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .toolbar input { padding: 8px; min-width: 260px; }
+    .toolbar button { padding: 8px 12px; cursor: pointer; }
+    .status { margin: 8px 0; color: #444; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: middle; }
+    th { background: #f5f5f5; position: sticky; top: 0; z-index: 1; }
+    td.num { text-align: right; }
+    img.thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+    .muted { color: #777; font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<h2>Listado Artículos (Stock con Imagen)</h2>
+
+<div class="toolbar">
+  <button id="btnLoad">Cargar</button>
+  <button id="btnExport">Exportar Excel (con imágenes)</button>
+  <input id="txtFilter" type="text" placeholder="Filtrar por referencia / color / colección..." />
+  <span class="muted">API: <code>http://localhost:5232/api/ProcesoPrePedido/ListArticColecImgStockAsync</code></span>
+</div>
+
+<div id="status" class="status"></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Imagen</th>
+      <th>Referencia</th>
+      <th>Color</th>
+      <th>Procedencia</th>
+      <th>Cód. Colec</th>
+      <th>Desc. Colec</th>
+      <th>T34</th>
+      <th>T35</th>
+      <th>T36</th>
+      <th>T37</th>
+      <th>T38</th>
+      <th>T39</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<script>
+  const API_URL = "http://localhost:5232/api/ProcesoPrePedido/ListArticColecImgStockAsync";
+  const API_URL_EXPORT = "http://localhost:5232/api/ProcesoPrePedido/GenerarArticColecImgStockExcelAsync";
+
+  const statusEl = document.getElementById("status");
+  const tbody = document.getElementById("tbody");
+  const btnLoad = document.getElementById("btnLoad");
+  const btnExport = document.getElementById("btnExport");
+  const txtFilter = document.getElementById("txtFilter");
+
+  let data = [];
+
+  function setStatus(msg) {
+    statusEl.textContent = msg || "";
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function renderTable(rows) {
+    tbody.innerHTML = rows.map(r => {
+      const imgHtml = r.imagen
+        ? `<img class="thumb" src="${r.imagen}" alt="img" />`
+        : `<span class="muted">Sin imagen</span>`;
+
+      return `
+        <tr>
+          <td>${imgHtml}</td>
+          <td>${escapeHtml(r.referencia)}</td>
+          <td>${escapeHtml(r.color)}</td>
+          <td>${escapeHtml(r.procedencia)}</td>
+          <td>${escapeHtml(r.codColec)}</td>
+          <td>${escapeHtml(r.desColec)}</td>
+          <td class="num">${r.t34 ?? 0}</td>
+          <td class="num">${r.t35 ?? 0}</td>
+          <td class="num">${r.t36 ?? 0}</td>
+          <td class="num">${r.t37 ?? 0}</td>
+          <td class="num">${r.t38 ?? 0}</td>
+          <td class="num">${r.t39 ?? 0}</td>
+          <td class="num"><b>${r.total ?? 0}</b></td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function getFilteredData() {
+    const q = txtFilter.value.trim().toLowerCase();
+    if (!q) return data;
+
+    return data.filter(r => {
+      const ref = (r.referencia ?? "").toLowerCase();
+      const col = (r.color ?? "").toLowerCase();
+      const colec = (r.desColec ?? "").toLowerCase();
+      const proc = (r.procedencia ?? "").toLowerCase();
+      return ref.includes(q) || col.includes(q) || colec.includes(q) || proc.includes(q);
+    });
+  }
+
+  function applyFilter() {
+    const filtered = getFilteredData();
+    renderTable(filtered);
+    setStatus(`Mostrando ${filtered.length} de ${data.length}`);
+  }
+
+  async function load() {
+    setStatus("Cargando...");
+    tbody.innerHTML = "";
+
+    try {
+      const resp = await fetch(API_URL, { method: "GET" });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`HTTP ${resp.status} - ${text}`);
+      }
+      data = await resp.json();
+      renderTable(data);
+      setStatus(`Cargado: ${data.length} registros`);
+    } catch (err) {
+      console.error(err);
+      setStatus("Error: " + err.message);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="13">
+            <b>No se pudo consumir el API.</b><br/>
+            <span class="muted">Si es CORS, habilítalo en tu API.</span>
+          </td>
+        </tr>`;
+    }
+  }
+async function exportExcelWithImages() {
+  const rows = getFilteredData(); // o data
+  if (!rows || rows.length === 0) {
+    alert("No hay datos para exportar.");
+    return;
+  }
+
+  setStatus("Preparando exportación...");
+
+  // ARMAMOS EL DTO EXACTO PARA .NET: byte[] => base64 string
+  const item = rows.map(r => ({
+    imagen: dataUriToBase64(r.imagen),   // <-- base64 string (SIN "data:image...")
+    referencia: r.referencia ?? "",
+    color: r.color ?? "",
+    procedencia: r.procedencia ?? "",
+    codColec: r.codColec ?? "",
+    desColec: r.desColec ?? "",
+    t34: r.t34 ?? 0,
+    t35: r.t35 ?? 0,
+    t36: r.t36 ?? 0,
+    t37: r.t37 ?? 0,
+    t38: r.t38 ?? 0,
+    t39: r.t39 ?? 0,
+    total: r.total ?? 0
+  }));
+
+  // OJO: tu API espera { items: [...] }
+  const payload = { item };
+
+  try {
+    const resp = await fetch(API_URL_EXPORT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`HTTP ${resp.status} - ${text}`);
+    }
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reporte_stock_${new Date().toISOString().slice(0,19).replaceAll(":","-")}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+    setStatus("Exportación completa ✅");
+  } catch (err) {
+    console.error("EXPORT ERROR:", err);
+    alert("Error exportando: " + err.message);
+    setStatus("Error exportando: " + err.message);
+  }
+}
+
+function dataUriToBase64(dataUri) {
+  if (!dataUri) return null;
+
+  // data:image/jpeg;base64,AAA...
+  const idx = dataUri.indexOf("base64,");
+  if (idx >= 0) return dataUri.substring(idx + 7);
+
+  // si ya viene base64 puro
+  return dataUri;
+}
+
+  
+  btnLoad.addEventListener("click", load);
+  btnExport.addEventListener("click", async () => await exportExcelWithImages());
+  txtFilter.addEventListener("input", applyFilter);
+
+  // Auto cargar
+  load();
+</script>
+
+</body>
+</html>
