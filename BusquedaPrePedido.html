@@ -364,8 +364,35 @@
       </div>
     </div>
 
-    <div class="mb-3">
-      <input type="text" id="buscador" class="form-control" placeholder="Buscar pre-pedido por número pedido, cliente, modelo...">
+   <div class="row mb-3 g-2">
+
+      <div class="col-md-6">
+        <input type="text"
+              id="buscador"
+              class="form-control"
+              placeholder="Buscar por pre-pedido, cliente, documento, vendedor o canal">
+      </div>
+
+      <div class="col-md-3">
+        <select id="filtroEstado" class="form-select">
+          <option value="">Todos los Estados</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="filtroProcedencia" class="form-select">
+          <option value="">Todas las Procedencias</option>
+        </select>
+      </div>
+
+
+      <div class="col-md-2">
+        <button id="btnLimpiarFiltros" class="btn btn-outline-secondary w-100">
+          <i class="bi bi-eraser"></i> Limpiar
+        </button>
+      </div>
+
+</div>
+
     </div>
 
     <div class="table-responsive" style="overflow-x: auto;">
@@ -691,7 +718,8 @@
         .then(data => {
           const listaPrePedidos = data.lprePedidosDto || [];
           todosPrePedidos = listaPrePedidos || [];
-
+          cargarEstadosFiltro(todosPrePedidos);
+          cargarProcedenciasFiltro(todosPrePedidos);
           // Total global (sin filtro)
           const elTotal = document.getElementById('txtTotalParesGlobal');
           if (elTotal) elTotal.textContent = calcularTotalPares(todosPrePedidos);
@@ -1085,6 +1113,26 @@
       paginaActual = 1;
       renderPagina();
     });
+    document.getElementById('filtroEstado').addEventListener('change', function () {
+  paginaActual = 1;
+  renderPagina();
+});
+
+  document.getElementById('filtroProcedencia').addEventListener('change', function () {
+  paginaActual = 1;
+  renderPagina();
+});
+
+document.getElementById('btnLimpiarFiltros').addEventListener('click', function () {
+
+  document.getElementById('buscador').value = "";
+  document.getElementById('filtroEstado').value = "";
+  document.getElementById('filtroProcedencia').value = "";
+  paginaActual = 1;
+  renderPagina();
+
+});
+
 
     // filas por página
     document.getElementById('filas-por-pagina').addEventListener('change', e => {
@@ -1879,24 +1927,76 @@
     document.getElementById('btnAgregarCurva')?.addEventListener('click', () => {
       registrarCurvasGrendene();
     });
-function obtenerFiltrados() {
-  const buscador = document.getElementById('buscador');
-  const filtroTexto = (buscador?.value || '').toLowerCase().trim();
 
-  // Aquí puedes sumar más filtros en el futuro (estado, canal, fechas, etc.)
+function obtenerFiltrados() {
+
+  const buscador = document.getElementById('buscador');
+  const filtroEstado = document.getElementById('filtroEstado');
+const filtroProcedencia = document.getElementById('filtroProcedencia');
+
+  const filtroTexto = (buscador?.value || '').toLowerCase().trim();
+  const estado = (filtroEstado?.value || '').toLowerCase().trim();
+  const procedencia = (filtroProcedencia?.value || '').toLowerCase().trim();
+
   return todosPrePedidos.filter(u => {
+
     const texto = `
-      ${u.nroPrePedido}
+      ${u.nroPrePedido || ''}
       ${u.ocliente?.nomCliente || ''}
       ${u.ocliente?.nroDocumento || ''}
       ${u.codvendedor || ''}
       ${u.canal || ''}
       ${u.nombreProcedencia || ''}
+      ${u.estado || ''}
+      ${u.subEstado || ''}
     `.toLowerCase();
 
-    return texto.includes(filtroTexto);
+    const cumpleTexto = !filtroTexto || texto.includes(filtroTexto);
+    const cumpleEstado = !estado || (u.estado || '').toLowerCase().trim() === estado;
+ const cumpleProcedencia = !procedencia || (u.nombreProcedencia || '').toLowerCase().trim() === procedencia;
+    return cumpleTexto && cumpleEstado && cumpleProcedencia;
+
   });
+
 }
+
+function cargarEstadosFiltro(lista) {
+
+  const select = document.getElementById("filtroEstado");
+  if (!select) return;
+
+  const estados = [...new Set(lista.map(x => x.estado).filter(e => e))];
+
+  select.innerHTML = '<option value="">Todos los estados</option>';
+
+  estados.forEach(est => {
+    const option = document.createElement("option");
+    option.value = est;
+    option.textContent = est;
+    select.appendChild(option);
+  });
+
+}
+
+function cargarProcedenciasFiltro(lista) {
+
+  const select = document.getElementById("filtroProcedencia");
+  if (!select) return;
+
+  const procedencias = [...new Set(lista.map(x => x.nombreProcedencia).filter(p => p))];
+
+  select.innerHTML = '<option value="">Procedencias</option>';
+
+  procedencias.forEach(pro => {
+    const option = document.createElement("option");
+    option.value = pro;
+    option.textContent = pro;
+    select.appendChild(option);
+  });
+
+}
+
+
   </script>
 </body>
 </html>

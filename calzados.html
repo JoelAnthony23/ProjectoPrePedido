@@ -4397,10 +4397,16 @@ function limpiarFormulario(){
 
     async function cargarAnexosCliente(){
       const clienteDocumento=document.getElementById('dni').value;
-     const url = `https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/SearchAnexoNroDocumento?numeroDocumento=${encodeURIComponent(clienteDocumento)}`;
+      const codUsuarioAnexo = (localStorage.getItem('usuario')||'').toLowerCase().trim();
+
+    // const url = `https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/SearchAnexoNroDocumento?codUsuario=${encodeURIComponent(codUsuarioAnexo)}?numeroDocumento=${encodeURIComponent(clienteDocumento)}`;
    //   const url = `http://localhost:5232/api/ProcesoPrePedido/SearchAnexoNroDocumento?numeroDocumento=${encodeURIComponent(clienteDocumento)}`;
      
-      const resp = await fetch(url); const base = await resp.json();
+      const resp = await fetch('https://appsapweb1-awc5dkfue6hgdtbu.centralus-01.azurewebsites.net/api/ProcesoPrePedido/SearchAnexoNroDocumento?'+
+      new URLSearchParams({ codUsuario: codUsuarioAnexo, numeroDocumento: clienteDocumento })
+
+      ); 
+      const base = await resp.json();
       return Array.isArray(base)?base:[];
     }
 
@@ -4443,8 +4449,8 @@ const usuarioLS = (localStorage.getItem('usuario')||'').toLowerCase();
 // Para otros vendedores (no-stock) que desean mantener el/los anexos seleccionados al "Agregar"
 const KEEP_ANEXOS_SELECTED_USERS = new Set(['jmejia','emori','lmanzur','jzarate','dortiz']);
 const keepAnexosSelected = KEEP_ANEXOS_SELECTED_USERS.has(usuarioLS);
-const ANEXO_POR_USUARIO = { hmozo: 99, eoyola: 102, aalvarado: 23 };
-const defaultCodGlobal = ANEXO_POR_USUARIO[usuarioLS];
+const ANEXO_POR_USUARIO = { hmozo: 99, eoyola: 102, aalvarado: 23, gmartinez: 99 };
+const defaultCodGlobal = ANEXO_POR_USUARIO[usuarioLS.trim()];
 const hasDefaultGlobal = defaultCodGlobal != null && (state.anexos || []).some(a => Number(a?.codAnexo) === Number(defaultCodGlobal));
 const isStockUserGlobal = Boolean(hasDefaultGlobal);
 
@@ -5280,6 +5286,7 @@ async function exportarProductosPDF(items) {
 
     resultado.push({
       Imagen: imagen,
+      Codigo: codigo,
       Modelo: modelo,
       Color: color,
       Cajas: vCajas,
